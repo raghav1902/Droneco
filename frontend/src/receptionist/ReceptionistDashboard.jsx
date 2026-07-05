@@ -145,7 +145,7 @@ const ReceptionistDashboard = () => {
     <AppLayout role="receptionist" activeTab={activeTab} setActiveTab={setActiveTab}>
       <div className="w-full">
         {activeTab === 'leads' && (
-          <StudentLeads 
+          <StudentLeads
             leads={leads}
             loading={loading}
             search={search}
@@ -165,11 +165,11 @@ const ReceptionistDashboard = () => {
         {/* FEE MANAGEMENT TABS */}
         {activeTab === 'dashboard' && <ReceptionDashboard />}
         {activeTab === 'students' && (
-          selectedStudentProfile ? 
-            <StudentProfile student={selectedStudentProfile} onBack={() => setSelectedStudentProfile(null)} /> : 
-            <StudentsList 
-              onViewProfile={setSelectedStudentProfile} 
-              onCollectFee={(student) => { setSelectedFeeStudent(student); setActiveTab('collect-fee'); }} 
+          selectedStudentProfile ?
+            <StudentProfile student={selectedStudentProfile} onBack={() => setSelectedStudentProfile(null)} /> :
+            <StudentsList
+              onViewProfile={setSelectedStudentProfile}
+              onCollectFee={(student) => { setSelectedFeeStudent(student); setActiveTab('collect-fee'); }}
               onEnrollNew={() => { setSelectedLeadForAdmission(null); setActiveTab('admission-wizard'); }}
             />
         )}
@@ -179,9 +179,10 @@ const ReceptionistDashboard = () => {
         {activeTab === 'payment-history' && <PaymentHistory />}
         {activeTab === 'settings' && <ReceptionSettings />}
         {activeTab === 'admission-wizard' && (
-          <AdmissionWizard 
-            lead={selectedLeadForAdmission} 
-            courses={courses} 
+          <AdmissionWizard
+            lead={selectedLeadForAdmission}
+            courses={courses}
+            questions={questions}
             onComplete={() => { setActiveTab('students'); setSelectedLeadForAdmission(null); fetchData(); }}
             onCancel={() => { setSelectedLeadForAdmission(null); setActiveTab('leads'); }}
           />
@@ -206,7 +207,7 @@ const ReceptionistDashboard = () => {
             </button>
 
             <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1.25rem', marginBottom: '2rem' }}>
-              <span className={`badge badge-${selectedLead.status.toLowerCase().replace(' ', '-')}`} style={{ marginBottom: '0.5rem' }}>{selectedLead.status}</span>
+              <span className={`badge badge-${selectedLead.status?.toLowerCase().replace(' ', '-')}`} style={{ marginBottom: '0.5rem' }}>{selectedLead.status}</span>
               <h2 style={{ fontSize: '1.5rem' }}>{selectedLead.full_name}</h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Submitted: {new Date(selectedLead.submitted_at).toLocaleString()}</p>
             </div>
@@ -285,8 +286,8 @@ const ReceptionistDashboard = () => {
                       <option value="Enrolled">Enrolled</option>
                     </select>
                   </div>
-                  <button 
-                    className="btn btn-secondary" 
+                  <button
+                    className="btn btn-secondary"
                     style={{ width: '100%', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--accent-hex)', borderColor: 'var(--accent-hex)' }}
                     onClick={() => {
                       handleEnrollLead(selectedLead);
@@ -313,26 +314,26 @@ const ReceptionistDashboard = () => {
                     </button>
                   </form>
                   <h4 style={{ fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 600 }}>Follow-up history</h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto' }}>
-                      {feedbackHistory.length === 0 ? (
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No follow-up remarks recorded.</span>
-                      ) : (
-                        feedbackHistory.map(log => (
-                          <div key={log.id} style={{ background: 'var(--bg-tertiary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', fontSize: '0.8rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.15rem', fontSize: '0.75rem' }}>
-                              <span>{log.staff_id === user.id ? 'You' : 'Counselor'}</span>
-                              <span>{new Date(log.created_at).toLocaleDateString()}</span>
-                            </div>
-                            <p style={{ color: 'var(--text-main)' }}>{log.feedback_text}</p>
-                            {log.next_follow_up_date && (
-                              <div style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: 'var(--warning)', fontWeight: 500 }}>
-                                Next Follow-up: {new Date(log.next_follow_up_date).toLocaleDateString()}
-                              </div>
-                            )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto' }}>
+                    {feedbackHistory.length === 0 ? (
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No follow-up remarks recorded.</span>
+                    ) : (
+                      feedbackHistory.map(log => (
+                        <div key={log.id} style={{ background: 'var(--bg-tertiary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', fontSize: '0.8rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.15rem', fontSize: '0.75rem' }}>
+                            <span>{log.staff_id === user.id ? 'You' : 'Counselor'}</span>
+                            <span>{new Date(log.created_at).toLocaleDateString()}</span>
                           </div>
-                        ))
-                      )}
-                    </div>
+                          <p style={{ color: 'var(--text-main)' }}>{log.feedback_text}</p>
+                          {log.next_follow_up_date && (
+                            <div style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: 'var(--warning)', fontWeight: 500 }}>
+                              Next Follow-up: {new Date(log.next_follow_up_date).toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -343,4 +344,4 @@ const ReceptionistDashboard = () => {
   );
 };
 
-  export default ReceptionistDashboard;
+export default ReceptionistDashboard;

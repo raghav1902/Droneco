@@ -6,10 +6,14 @@
 const express = require('express');
 const router = express.Router();
 const { getStats } = require('../controllers/Admin/statsController');
+const { getReports } = require('../controllers/Admin/reportsController');
 const { protect } = require('../middleware/authentication/authMiddleware');
 const { authorize } = require('../middleware/authorization/roleMiddleware');
 
 // Dashboard statistics (Admin only)
 router.get('/stats', protect, authorize('admin'), getStats);
+
+// Reports (Admin only)
+router.get('/reports', protect, authorize('admin'), getReports);
 
 module.exports = router;

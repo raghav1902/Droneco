@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const {
   getCourses,
+  getCourseById,
   createCourse,
   updateCourse,
   toggleCourseStatus
@@ -14,10 +15,10 @@ const {
 const { protect } = require('../middleware/authentication/authMiddleware');
 const { authorize } = require('../middleware/authorization/roleMiddleware');
 const jwt = require('jsonwebtoken');
-const { users } = require('../database/store');
+const User = require('../models/User/User');
 
-// Optional auth helper for GET /
-const optionalProtect = (req, res, next) => {
+// Optional auth helper for GET / (Allows public access but attaches user if token exists)
+const optionalProtect = async (req, res, next) => {
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
@@ -25,21 +26,25 @@ const optionalProtect = (req, res, next) => {
     try {
       const token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'YOUR_JWT_SUPER_SECRET_KEY');
-      const user = users.find(u => u.id === decoded.id);
+      const user = await User.findById(decoded.id).populate('role');
+
       if (user && user.status === 'active') {
-        const { password, ...userWithoutPassword } = user;
-        req.user = userWithoutPassword;
+        req.user = {
+          id: user._id.toString(),
+          role: user.role.name
+        };
       }
     } catch (error) {
-      // Ignore token errors for optional auth
+      // Ignore token errors for optional auth, just proceed as public user
     }
   }
   next();
 };
 
 router.get('/', optionalProtect, getCourses);
-router.post('/', protect, authorize('admin'), createCourse);
-router.put('/:id', protect, authorize('admin'), updateCourse);
-router.delete('/:id', protect, authorize('admin'), toggleCourseStatus);
+router.get('/:id', optionalProtect, getCourseById);
+router.post('/', protect, authorize('Admin'), createCourse); // Note: authorize uses exactly what req.user.role is
+router.put('/:id', protect, authorize('Admin'), updateCourse);
+router.delete('/:id', protect, authorize('Admin'), toggleCourseStatus);
 
 module.exports = router;

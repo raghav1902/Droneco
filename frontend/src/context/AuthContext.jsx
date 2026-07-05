@@ -68,8 +68,8 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const isAdmin = () => user && user.role === 'admin';
-  const isReceptionist = () => user && user.role === 'receptionist';
+  const isAdmin = () => user && user.role?.toLowerCase() === 'admin';
+  const isReceptionist = () => user && user.role?.toLowerCase() === 'receptionist';
 
   const updateUser = (newUserData) => {
     setUser(newUserData);

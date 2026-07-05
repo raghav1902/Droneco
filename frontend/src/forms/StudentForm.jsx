@@ -317,7 +317,7 @@ const StudentForm = () => {
           )}
 
           {(currentStep === 0 || currentStep === 1) && (
-            <Step1 
+            <Step1
               currentStep={currentStep}
               setCurrentStep={setCurrentStep}
               formData={formData}
@@ -331,7 +331,7 @@ const StudentForm = () => {
           )}
 
           {currentStep === 2 && (
-            <Step2 
+            <Step2
               formData={formData}
               validationErrors={validationErrors}
               questions={questions}
@@ -343,7 +343,7 @@ const StudentForm = () => {
           )}
 
           {currentStep === 3 && (
-            <Step3 
+            <Step3
               formData={formData}
               handleFeedbackChange={handleFeedbackChange}
               prevStep={prevStep}
@@ -352,7 +352,7 @@ const StudentForm = () => {
           )}
 
           {currentStep === 4 && (
-            <Review 
+            <Review
               formData={formData}
               courses={courses}
               questions={questions}
@@ -363,7 +363,7 @@ const StudentForm = () => {
           )}
 
           {currentStep === 5 && (
-            <Success 
+            <Success
               formData={formData}
               setCurrentStep={setCurrentStep}
               setFormData={setFormData}

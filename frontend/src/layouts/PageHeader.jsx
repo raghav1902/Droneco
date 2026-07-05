@@ -1,11 +1,11 @@
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
 
-const PageHeader = ({ 
-  title, 
-  description, 
-  breadcrumbs = [], 
-  action 
+const PageHeader = ({
+  title,
+  description,
+  breadcrumbs = [],
+  action
 }) => {
   return (
     <div className="flex flex-col gap-4 pb-6 border-b border-border mb-6">

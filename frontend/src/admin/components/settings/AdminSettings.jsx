@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { showToast } from '../../../utils/toast.js';
 
-import { 
-  Building2, Wallet, Receipt, Users, Shield, 
-  Database, ScrollText, Info, Save, Upload, 
+import {
+  Building2, Wallet, Receipt, Users, Shield,
+  Database, ScrollText, Info, Save, Upload,
   Download, Plus, Edit2, Trash2, Key
 } from 'lucide-react';
 
@@ -87,7 +87,7 @@ const FeeSettings = () => (
           <input type="number" className="form-input" defaultValue="5" />
         </div>
         <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-          <label className="form-label">Late Fee Rules</label>
+          <label className="form-label">Late </label>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <input type="number" className="form-input" defaultValue="20" placeholder="Amount" style={{ width: '150px' }} />
             <select className="form-select" style={{ width: '150px' }}>
@@ -237,7 +237,7 @@ const SecuritySettings = () => (
         <button className="btn btn-primary" style={{ marginTop: '0.5rem' }} onClick={(e) => { e.preventDefault(); showToast('Action processed successfully!', 'success'); }}>Update Password</button>
       </div>
     </div>
-    
+
     <div className="glass-card" style={{ padding: '2rem' }}>
       <h4 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Access & Sessions</h4>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
@@ -311,7 +311,7 @@ const AuditLogs = () => (
         <tbody>
           {[
             { id: 1, time: '2026-07-03 10:45 AM', user: 'Admin User', action: 'Login', details: 'Successful login', ip: '192.168.1.1' },
-            { id: 2, time: '2026-07-03 11:12 AM', user: 'Admin User', action: 'Update Settings', details: 'Updated Fee Rules', ip: '192.168.1.1' },
+            // { id: 2, time: '2026-07-03 11:12 AM', user: 'Admin User', action: 'Update Settings', details: 'Updated Fee Rules', ip: '192.168.1.1' },
             { id: 3, time: '2026-07-03 11:20 AM', user: 'Sarah Jenkins', action: 'Collect Fee', details: 'Collected ₹1500 from STU-089', ip: '192.168.1.4' },
           ].map(log => (
             <tr key={log.id} style={{ borderBottom: '1px solid var(--border)' }} className="table-row-hover">
@@ -339,7 +339,7 @@ const About = () => (
       </div>
       <h2 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>Institute Management System</h2>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Version 1.0.0 (Build 20260703)</p>
-      
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', textAlign: 'left', background: 'var(--bg-app)', padding: '1.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: '0.5rem' }}>
           <span style={{ color: 'var(--text-muted)' }}>Developer</span>
@@ -396,12 +396,12 @@ const AdminSettings = () => {
           <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.5rem', paddingLeft: '0.5rem' }}>Settings Menu</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
             {menuItems.map(item => (
-              <button 
+              <button
                 key={item.id}
                 className={`btn ${activeSection === item.id ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ 
-                  justifyContent: 'flex-start', 
-                  padding: '0.75rem 1rem', 
+                style={{
+                  justifyContent: 'flex-start',
+                  padding: '0.75rem 1rem',
                   borderColor: 'transparent',
                   background: activeSection === item.id ? 'var(--accent-hex)' : 'transparent',
                   color: activeSection === item.id ? '#fff' : 'var(--text-main)',

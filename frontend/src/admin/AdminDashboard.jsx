@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 import AppLayout from '../layouts/AppLayout';
 import FeeDashboard from './components/FeeDashboard';
 import FeeStructure from './components/FeeStructure';
-import FeeRules from './components/FeeRules';
 import DiscountManagement from './components/DiscountManagement';
 import Reports from './components/Reports';
 import AdminSettings from './components/settings/AdminSettings';
@@ -159,8 +158,8 @@ const AdminDashboard = () => {
 
       const payload = {
         question_text: questionForm.question_text,
-        step_number: questionForm.step_number,
-        field_type: questionForm.field_type,
+        order: questionForm.step_number,
+        type: questionForm.field_type,
         options,
         is_required: questionForm.is_required
       };
@@ -182,8 +181,8 @@ const AdminDashboard = () => {
   const handleEditQuestion = (q) => {
     setQuestionForm({
       question_text: q.question_text,
-      step_number: q.step_number,
-      field_type: q.field_type,
+      step_number: q.order,
+      field_type: q.type,
       optionsString: q.options ? q.options.join(', ') : '',
       is_required: q.is_required
     });
@@ -241,7 +240,7 @@ const AdminDashboard = () => {
                       {stats.leadsByStatus.map((item, index) => {
                         const percent = stats.summary.totalLeads > 0 ? (item.value / stats.summary.totalLeads) * 100 : 0;
                         return (
-                          <div key={item.name} style={{ 
+                          <div key={item.name} style={{
                             padding: '1.25rem 0',
                             borderBottom: index !== stats.leadsByStatus.length - 1 ? '1px solid var(--border-color)' : 'none'
                           }}>
@@ -273,7 +272,7 @@ const AdminDashboard = () => {
                       {stats.leadsByCourse.map((item, index) => {
                         const percent = stats.summary.totalLeads > 0 ? (item.value / stats.summary.totalLeads) * 100 : 0;
                         return (
-                          <div key={item.name} style={{ 
+                          <div key={item.name} style={{
                             padding: '1.25rem 0',
                             borderBottom: index !== stats.leadsByCourse.length - 1 ? '1px solid var(--border-color)' : 'none'
                           }}>
@@ -401,7 +400,7 @@ const AdminDashboard = () => {
                   </div>
                   <div className="form-group">
                     <label className="form-label">Duration (in Months)</label>
-                    <input type="number" className="form-input" value={courseForm.duration_months} onChange={(e) => setCourseForm({ ...courseForm, duration_months: e.target.value })} required />
+                    <input type="number" className="form-input" value={courseForm.duration_months} onChange={(e) => setCourseForm({ ...courseForm, duration_months: Number(e.target.value) })} required />
                   </div>
                   <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                     <label className="form-label">Course Description</label>
@@ -524,12 +523,12 @@ const AdminDashboard = () => {
                 <tbody>
                   {questions.map(q => (
                     <tr key={q.id} style={{ borderBottom: '1px solid var(--border-color)', opacity: q.is_active ? 1 : 0.6 }}>
-                      <td style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>Step {q.step_number}</td>
+                      <td style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>Step {q.order}</td>
                       <td style={{ padding: '1rem 1.5rem' }}>
                         <div style={{ fontWeight: 500 }}>{q.question_text}</div>
                         {q.options && q.options.length > 0 && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Options: {q.options.join(', ')}</div>}
                       </td>
-                      <td style={{ padding: '1rem 1.5rem', textTransform: 'capitalize' }}>{q.field_type}</td>
+                      <td style={{ padding: '1rem 1.5rem', textTransform: 'capitalize' }}>{q.type}</td>
                       <td style={{ padding: '1rem 1.5rem' }}>{q.is_required ? 'Yes' : 'No'}</td>
                       <td style={{ padding: '1rem 1.5rem' }}>
                         <span className={`badge ${q.is_active ? 'badge-enrolled' : 'badge-not-interested'}`}>{q.is_active ? 'Active' : 'Inactive'}</span>
@@ -631,7 +630,6 @@ const AdminDashboard = () => {
         {/* NEW TABS FOR FEE MANAGEMENT */}
         {activeTab === 'fee_dashboard' && <FeeDashboard />}
         {activeTab === 'fee_structure' && <FeeStructure />}
-        {activeTab === 'fee_rules' && <FeeRules />}
         {activeTab === 'discounts' && <DiscountManagement />}
         {activeTab === 'reports' && <Reports />}
         {activeTab === 'settings' && <AdminSettings />}

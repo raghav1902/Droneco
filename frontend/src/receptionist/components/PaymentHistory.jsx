@@ -1,17 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { showToast } from '../../utils/toast.js';
 
 
-const mockHistory = [];
+import API from '../../api/api.js';
 
 const PaymentHistory = () => {
   const [search, setSearch] = useState('');
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredHistory = mockHistory.filter(txn => 
-    txn.student.toLowerCase().includes(search.toLowerCase()) || 
-    txn.rcpt.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        const res = await API.get('/payments');
+        setHistory(res.data.data);
+      } catch (err) {
+        console.error('Failed to fetch payment history:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPayments();
+  }, []);
+
+  const filteredHistory = history.filter(txn => {
+    const studentName = txn.fee_id?.lead_id?.full_name || '';
+    const receipt = txn.receipt_number || '';
+    return studentName.toLowerCase().includes(search.toLowerCase()) ||
+      receipt.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
     <div className="animate-fade-in">
@@ -20,10 +38,10 @@ const PaymentHistory = () => {
         <div style={{ display: 'flex', gap: '1rem' }}>
           <div style={{ position: 'relative' }}>
             <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="Search history..." 
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Search history..."
               style={{ paddingLeft: '2.5rem' }}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -46,21 +64,26 @@ const PaymentHistory = () => {
           </thead>
           <tbody>
             {filteredHistory.map((txn) => (
-              <tr key={txn.rcpt} style={{ borderBottom: '1px solid var(--border)' }} className="table-row-hover">
-                <td style={{ padding: '1rem 1.5rem', color: 'var(--text-secondary)' }}>{txn.rcpt}</td>
-                <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)' }}>{txn.date}</td>
-                <td style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>{txn.student}</td>
-                <td style={{ padding: '1rem 1.5rem', color: 'var(--success)', fontWeight: 600 }}>+₹{txn.amount}</td>
+              <tr key={txn.id} style={{ borderBottom: '1px solid var(--border)' }} className="table-row-hover">
+                <td style={{ padding: '1rem 1.5rem', color: 'var(--text-secondary)' }}>{txn.receipt_number}</td>
+                <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)' }}>{new Date(txn.transaction_date).toLocaleDateString()}</td>
+                <td style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>{txn.fee_id?.lead_id?.full_name || 'Unknown'}</td>
+                <td style={{ padding: '1rem 1.5rem', color: 'var(--success)', fontWeight: 600 }}>+₹{txn.amount_paid?.toLocaleString()}</td>
                 <td style={{ padding: '1rem 1.5rem' }}>
                   <span style={{ fontSize: '0.85rem', padding: '0.2rem 0.5rem', background: 'var(--bg-tertiary)', borderRadius: '4px' }}>
-                    {txn.method}
+                    {txn.payment_method}
                   </span>
                 </td>
                 <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
-                  <button className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }} onClick={(e) => { e.preventDefault(); showToast('Action processed successfully!', 'success'); }}>View Receipt</button>
+                  <button className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }} onClick={(e) => { e.preventDefault(); showToast('Receipt Viewer Coming Soon!', 'info'); }}>View Receipt</button>
                 </td>
               </tr>
             ))}
+            {filteredHistory.length === 0 && (
+              <tr>
+                <td colSpan="6" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>No payment history found.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

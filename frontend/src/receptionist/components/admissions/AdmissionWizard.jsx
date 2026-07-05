@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { showToast } from '../../../utils/toast.js';
 import API from '../../../api/api.js';
-import { 
-  CheckCircle, User, FileText, UploadCloud, 
+import {
+  CheckCircle, User, FileText, UploadCloud,
   CreditCard, ShieldCheck, ChevronRight, ChevronLeft, Printer, Home, X, Check, Image as ImageIcon, File, Eye, Zap
 } from 'lucide-react';
 
@@ -16,7 +16,7 @@ const steps = [
   { id: 6, title: 'Finish', icon: CheckCircle },
 ];
 
-const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
+const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     // Step 1: Lead Info
@@ -28,7 +28,7 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
     address: lead?.city || '',
     courseSelected: lead?.interested_course_id || '',
     inquiryDate: lead?.created_at ? new Date(lead.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-    
+
     // Step 2: Student Details
     dob: '',
     gender: '',
@@ -39,14 +39,16 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
     joiningDate: new Date().toISOString().split('T')[0],
     batch: '',
     section: '',
+    section: '',
     remarks: '',
+    responses: lead?.responses?.reduce((acc, r) => ({ ...acc, [r.question_id]: r.response_value }), {}) || {},
 
     // Step 3: Documents (Mock)
     photo: null,
     aadhaar: null,
     marksheet: null,
     signature: null,
-    
+
     // Step 5: Fee
     paymentMethod: 'Cash',
     amountCollected: ''
@@ -55,7 +57,15 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
   const [studentId, setStudentId] = useState('');
   const [admissionNo, setAdmissionNo] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitLock = React.useRef(false);
   const [uploadProgress, setUploadProgress] = useState({});
+
+  // Fee calculation (moved from render scope to component scope)
+  const admissionFee = 2500;
+  const courseFee = 45000;
+  const discount = formData.courseSelected ? 5000 : 0;
+  const tax = (courseFee - discount) * 0.18;
+  const totalPayable = admissionFee + courseFee - discount + tax;
 
   const handleNextStep = () => {
     if (currentStep === 1) {
@@ -77,6 +87,13 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleResponseChange = (questionId, value) => {
+    setFormData(prev => ({
+      ...prev,
+      responses: { ...prev.responses, [questionId]: value }
+    }));
   };
 
   const handleGenerateId = () => {
@@ -117,26 +134,55 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
   };
 
   const handleFinalSubmit = async () => {
+    if (submitLock.current) return;
+    submitLock.current = true;
     setIsSubmitting(true);
+
     try {
-      // Call API to mark lead as Enrolled if lead exists
-      if (lead && lead.id) {
-        // Assuming a patch endpoint for status exists:
-        await API.patch(`/leads/${lead.id}/status`, { status: 'Enrolled' });
+      if (!lead || !lead.id) {
+        showToast('Lead ID is missing. Cannot create enrollment.', 'error');
+        submitLock.current = false;
+        setIsSubmitting(false);
+        return;
       }
-      // In a real app, we would also hit a POST /students endpoint here
-      // For this mockup, we just complete and notify
+
+      // Mark lead as Enrolled
+      await API.patch(`/leads/${lead.id}/status`, { status: 'Enrolled' });
+
+      // Create Fee Structure
+      const feeRes = await API.post('/fees', {
+        lead_id: lead.id,
+        course_id: formData.courseSelected,
+        total_amount: admissionFee + courseFee,
+        discount_amount: discount,
+        tax_amount: tax
+      });
+      const feeId = feeRes.data.data.id;
+
+      // Record Initial Payment if any amount was collected
+      const collectedAmount = Number(formData.amountCollected);
+      if (!isNaN(collectedAmount) && collectedAmount > 0) {
+        await API.post('/payments', {
+          fee_id: feeId,
+          amount_paid: collectedAmount,
+          payment_method: formData.paymentMethod,
+          remarks: 'Initial Admission Payment'
+        });
+      }
+
+      // ONLY navigate to Finish step on success, do not reset isSubmitting
+      // to avoid double clicks during the transition.
       handleNextStep();
     } catch (err) {
       console.error('Enrollment failed', err);
-      alert('Failed to process enrollment. Please try again.');
-    } finally {
+      showToast(err.response?.data?.message || 'Failed to process enrollment.', 'error');
+      submitLock.current = false;
       setIsSubmitting(false);
     }
   };
 
   const renderStepContent = () => {
-    switch(currentStep) {
+    switch (currentStep) {
       case 1:
         return (
           <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="p-2">
@@ -238,6 +284,59 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
                 <textarea className="form-textarea w-full p-3 border border-border rounded-md bg-surface text-foreground" rows="2" name="remarks" value={formData.remarks} onChange={handleChange}></textarea>
               </div>
             </div>
+
+            {questions && questions.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-border">
+                <h4 className="text-lg font-semibold mb-4 text-foreground">Additional Qualifying Details</h4>
+                <div className="grid grid-cols-2 gap-6">
+                  {questions.map(q => (
+                    <div key={q.id} className="form-group mb-0">
+                      <label className="form-label">{q.question_text} {q.is_required && '*'}</label>
+
+                      {q.type === 'text' && (
+                        <input type="text" className="form-input" value={formData.responses[q.id] || ''} onChange={(e) => handleResponseChange(q.id, e.target.value)} />
+                      )}
+
+                      {q.type === 'dropdown' && (
+                        <select className="form-select" value={formData.responses[q.id] || ''} onChange={(e) => handleResponseChange(q.id, e.target.value)}>
+                          <option value="">-- Select --</option>
+                          {q.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        </select>
+                      )}
+
+                      {q.type === 'radio' && (
+                        <div className="flex flex-col gap-2 mt-1">
+                          {q.options.map(opt => (
+                            <label key={opt} className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground">
+                              <input type="radio" name={`aw_q_${q.id}`} value={opt} checked={formData.responses[q.id] === opt} onChange={() => handleResponseChange(q.id, opt)} className="accent-primary" />
+                              {opt}
+                            </label>
+                          ))}
+                        </div>
+                      )}
+
+                      {q.type === 'checkbox' && (
+                        <div className="flex flex-col gap-2 mt-1">
+                          {q.options.map(opt => {
+                            const currentValues = formData.responses[q.id] ? formData.responses[q.id].split(', ') : [];
+                            const isChecked = currentValues.includes(opt);
+                            return (
+                              <label key={opt} className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground">
+                                <input type="checkbox" checked={isChecked} onChange={() => {
+                                  let newValues = isChecked ? currentValues.filter(v => v !== opt) : [...currentValues, opt];
+                                  handleResponseChange(q.id, newValues.join(', '));
+                                }} className="accent-primary" />
+                                {opt}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         );
       case 3:
@@ -270,7 +369,7 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
                       </div>
                       <p className="text-sm font-medium text-foreground mb-1 truncate w-full text-center">{formData[doc.key].name}</p>
                       <p className="text-xs text-muted-foreground">{formData[doc.key].size}</p>
-                      <button onClick={() => setFormData(prev => ({...prev, [doc.key]: null}))} className="text-xs text-destructive hover:underline mt-2">Remove</button>
+                      <button onClick={() => setFormData(prev => ({ ...prev, [doc.key]: null }))} className="text-xs text-destructive hover:underline mt-2">Remove</button>
                     </div>
                   )}
                   {uploadProgress[doc.key] > 0 && uploadProgress[doc.key] < 100 && (
@@ -288,7 +387,7 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
               <ShieldCheck className="w-16 h-16 text-primary mx-auto mb-6" />
               <h3 className="text-2xl font-semibold mb-2 text-foreground">Generate Student ID</h3>
               <p className="text-muted-foreground mb-8">Generate a unique institutional identity card number and admission record for {formData.studentName}.</p>
-              
+
               {!studentId ? (
                 <button onClick={handleGenerateId} className="btn btn-primary w-full py-3 text-lg font-semibold flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
                   <Zap className="w-5 h-5" /> Generate Identity
@@ -319,13 +418,6 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
           </motion.div>
         );
       case 5:
-        // Mock Fee calculation
-        const admissionFee = 2500;
-        const courseFee = 45000;
-        const discount = formData.courseSelected ? 5000 : 0;
-        const tax = (courseFee - discount) * 0.18;
-        const total = admissionFee + courseFee - discount + tax;
-
         return (
           <motion.div key="step5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="p-2">
             <h3 className="text-xl font-semibold mb-6 text-foreground">Fee Confirmation</h3>
@@ -355,7 +447,7 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
                     </div>
                     <div className="flex justify-between py-4 mt-2">
                       <span className="text-lg font-bold text-foreground">Total Payable</span>
-                      <span className="text-xl font-bold text-primary">₹{total.toLocaleString()}</span>
+                      <span className="text-xl font-bold text-primary">₹{totalPayable.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -367,16 +459,16 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
                     <label className="form-label">Amount to Collect Today</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">₹</span>
-                      <input type="number" className="form-input pl-8 text-lg font-semibold" value={formData.amountCollected} onChange={(e) => setFormData({...formData, amountCollected: e.target.value})} placeholder="0.00" />
+                      <input type="number" className="form-input pl-8 text-lg font-semibold" value={formData.amountCollected} onChange={(e) => setFormData({ ...formData, amountCollected: e.target.value })} placeholder="0.00" />
                     </div>
                   </div>
                   <div className="form-group mb-0">
                     <label className="form-label">Payment Mode</label>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       {['Cash', 'UPI', 'Card', 'Bank Transfer'].map(mode => (
-                        <div 
-                          key={mode} 
-                          onClick={() => setFormData({...formData, paymentMethod: mode})}
+                        <div
+                          key={mode}
+                          onClick={() => setFormData({ ...formData, paymentMethod: mode })}
                           className={`p-3 border rounded-md text-center cursor-pointer transition-all text-sm font-medium
                             ${formData.paymentMethod === mode ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-surface text-muted-foreground hover:border-primary/50'}`}
                         >
@@ -386,7 +478,7 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
                     </div>
                   </div>
                 </div>
-                <button onClick={handleFinalSubmit} disabled={isSubmitting} className="btn btn-primary w-full py-4 text-lg shadow-md flex items-center justify-center gap-2">
+                <button onClick={handleFinalSubmit} disabled={isSubmitting || submitLock.current} className="btn btn-primary w-full py-4 text-lg shadow-md flex items-center justify-center gap-2">
                   {isSubmitting ? <span className="spinner w-5 h-5 border-2"></span> : <><CheckCircle className="w-5 h-5" /> Confirm Admission</>}
                 </button>
               </div>
@@ -401,7 +493,7 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
             </div>
             <h2 className="text-3xl font-bold text-foreground mb-2">Enrollment Successful!</h2>
             <p className="text-muted-foreground mb-8 text-lg">Student {formData.studentName} has been admitted and added to the roster.</p>
-            
+
             <div className="bg-card border border-border rounded-xl p-6 max-w-md w-full mb-8 text-left shadow-sm">
               <div className="flex justify-between items-center py-2 border-b border-border/50">
                 <span className="text-muted-foreground">Student ID</span>
@@ -454,7 +546,7 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
           <div className="flex items-center justify-between relative">
             {/* Progress Line */}
             <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-muted rounded-full overflow-hidden z-0">
-              <motion.div 
+              <motion.div
                 className="h-full bg-primary"
                 initial={{ width: '0%' }}
                 animate={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
@@ -469,9 +561,9 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
 
               return (
                 <div key={step.id} className="relative z-10 flex flex-col items-center gap-2">
-                  <motion.div 
+                  <motion.div
                     initial={false}
-                    animate={{ 
+                    animate={{
                       backgroundColor: isActive || isCompleted ? 'hsl(var(--primary))' : 'hsl(var(--card))',
                       borderColor: isActive || isCompleted ? 'hsl(var(--primary))' : 'hsl(var(--border))',
                       color: isActive || isCompleted ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground))',
@@ -499,12 +591,12 @@ const AdmissionWizard = ({ lead, courses, onComplete, onCancel }) => {
               {renderStepContent()}
             </AnimatePresence>
           </div>
-          
+
           {/* Footer Controls */}
           {currentStep < 6 && (
             <div className="border-t border-border p-6 bg-muted/30 flex justify-between rounded-b-xl shrink-0 mt-auto">
-              <button 
-                onClick={prevStep} 
+              <button
+                onClick={prevStep}
                 disabled={currentStep === 1}
                 className={`btn btn-secondary flex items-center gap-2 ${currentStep === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
               >

@@ -5,7 +5,7 @@ import logo from '../assets/Droneco.jpg';
 
 const AppLayout = ({ role, activeTab, setActiveTab, children }) => {
   const { user, logout } = useAuth();
-  
+
   // Theme State
   const [isDark, setIsDark] = useState(document.body.classList.contains('dark-theme') || document.documentElement.classList.contains('dark'));
 
@@ -39,7 +39,6 @@ const AppLayout = ({ role, activeTab, setActiveTab, children }) => {
     { id: 'questions', label: 'Questions' },
     { id: 'fee_dashboard', label: 'Fee Dashboard' },
     { id: 'fee_structure', label: 'Fee Structure' },
-    { id: 'fee_rules', label: 'Fee Rules' },
     { id: 'discounts', label: 'Discounts' },
     { id: 'reports', label: 'Reports' },
     { id: 'settings', label: 'Settings' }
@@ -62,11 +61,11 @@ const AppLayout = ({ role, activeTab, setActiveTab, children }) => {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-app)' }}>
       {/* Top Navbar */}
-      <nav style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        padding: '1rem 2rem', 
+      <nav style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '1rem 2rem',
         borderBottom: '1px solid var(--border-color)',
         background: 'var(--bg-primary)',
         position: 'sticky',
@@ -78,16 +77,16 @@ const AppLayout = ({ role, activeTab, setActiveTab, children }) => {
           <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-main)' }}>Droneco</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-          <a href="/" style={{ cursor: 'pointer', transition: 'color 0.2s', textDecoration: 'none' }} onMouseEnter={e => e.target.style.color='var(--text-main)'} onMouseLeave={e => e.target.style.color='var(--text-secondary)'}>Student Form</a>
+          <a href="/" style={{ cursor: 'pointer', transition: 'color 0.2s', textDecoration: 'none' }} onMouseEnter={e => e.target.style.color = 'var(--text-main)'} onMouseLeave={e => e.target.style.color = 'var(--text-secondary)'}>Student Form</a>
           <a href={role === 'admin' ? '/admin' : '/receptionist'} style={{ cursor: 'pointer', color: 'var(--text-main)', fontWeight: 500, textDecoration: 'none' }}>
             {role === 'admin' ? 'Admin Panel' : 'Counselor Desk'}
           </a>
-          <a href="#" onClick={(e) => { e.preventDefault(); logout(); }} style={{ cursor: 'pointer', transition: 'color 0.2s', textDecoration: 'none' }} onMouseEnter={e => e.target.style.color='var(--danger)'} onMouseLeave={e => e.target.style.color='var(--text-secondary)'}>Sign Out</a>
-          <button 
+          <a href="#" onClick={(e) => { e.preventDefault(); logout(); }} style={{ cursor: 'pointer', transition: 'color 0.2s', textDecoration: 'none' }} onMouseEnter={e => e.target.style.color = 'var(--danger)'} onMouseLeave={e => e.target.style.color = 'var(--text-secondary)'}>Sign Out</a>
+          <button
             onClick={handleToggleTheme}
-            style={{ 
-              background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', 
-              borderRadius: '50%', width: '36px', height: '36px', 
+            style={{
+              background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)',
+              borderRadius: '50%', width: '36px', height: '36px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: 'var(--text-main)', cursor: 'pointer', outline: 'none'
             }}

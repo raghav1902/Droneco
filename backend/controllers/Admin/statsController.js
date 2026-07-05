@@ -3,93 +3,89 @@
  * @description Controller for admin dashboard analytics and statistics.
  */
 
-const { leads, courses } = require('../../database/store');
+const Lead = require('../../models/Lead/Lead');
+const Course = require('../../models/Course/Course');
 
 // @desc    Get lead analytics for admin dashboard
 // @route   GET /api/admin/stats
 // @access  Private (Admin only)
-const getStats = (req, res) => {
-  const totalLeads = leads.length;
-  
-  // Calculate status counts
-  const statusCounts = {
-    'New': 0,
-    'Contacted': 0,
-    'Interested': 0,
-    'Not Interested': 0,
-    'Enrolled': 0
-  };
-  
-  leads.forEach(lead => {
-    if (statusCounts[lead.status] !== undefined) {
-      statusCounts[lead.status]++;
-    }
-  });
+const getStats = async (req, res) => {
+  try {
+    const totalLeads = await Lead.countDocuments();
+    const enrolledLeads = await Lead.countDocuments({ status: 'Enrolled' });
+    const pendingFollowUps = await Lead.countDocuments({ status: { $in: ['New', 'Contacted'] } });
 
-  const enrolledCount = statusCounts['Enrolled'] || 0;
-  const conversionRate = totalLeads > 0 ? ((enrolledCount / totalLeads) * 100).toFixed(1) : 0;
-  const pendingFollowUps = (statusCounts['New'] || 0) + (statusCounts['Contacted'] || 0);
+    const conversionRate = totalLeads > 0 ? ((enrolledLeads / totalLeads) * 100).toFixed(1) : 0;
 
-  // Calculate leads by course
-  const courseCounts = {};
-  // Initialize all courses with 0
-  courses.forEach(course => {
-    courseCounts[course.course_name] = 0;
-  });
+    // Aggregate leads by status
+    const leadsByStatusAgg = await Lead.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
 
-  leads.forEach(lead => {
-    const course = courses.find(c => c.id === lead.interested_course_id);
-    const courseName = course ? course.course_name : 'Unknown / Deleted';
-    
-    if (courseCounts[courseName] === undefined) {
-      courseCounts[courseName] = 0;
-    }
-    courseCounts[courseName]++;
-  });
+    // Ensure all statuses are present
+    const defaultStatuses = ['New', 'Contacted', 'Interested', 'Not Interested', 'Enrolled'];
+    const statusMap = {};
+    defaultStatuses.forEach(s => statusMap[s] = 0);
+    leadsByStatusAgg.forEach(item => {
+      statusMap[item._id] = item.count;
+    });
+    const leadsByStatus = Object.keys(statusMap).map(key => ({ name: key, value: statusMap[key] }));
 
-  // Convert course counts to an array of { name, value } for frontend charts
-  const leadsByCourse = Object.keys(courseCounts).map(name => ({
-    name,
-    value: courseCounts[name]
-  }));
+    // Aggregate leads by course
+    const leadsByCourseAgg = await Lead.aggregate([
+      { $group: { _id: '$interested_course_id', count: { $sum: 1 } } }
+    ]);
 
-  // Convert status counts to an array of { name, value }
-  const leadsByStatus = Object.keys(statusCounts).map(name => ({
-    name,
-    value: statusCounts[name]
-  }));
+    const courses = await Course.find();
+    const courseMap = {};
+    courses.forEach(c => courseMap[c._id.toString()] = c.course_name);
 
-  // Get recent 5 leads
-  const recentLeads = [...leads]
-    .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
-    .slice(0, 5)
-    .map(lead => {
-      const course = courses.find(c => c.id === lead.interested_course_id);
-      return {
-        id: lead.id,
-        full_name: lead.full_name,
-        email: lead.email,
-        mobile_number: lead.mobile_number,
-        status: lead.status,
-        course_name: course ? course.course_name : 'N/A',
-        submitted_at: lead.submitted_at
-      };
+    const courseDataMap = {};
+    courses.forEach(c => courseDataMap[c.course_name] = 0);
+
+    leadsByCourseAgg.forEach(item => {
+      const courseId = item._id?.toString();
+      const courseName = courseMap[courseId] || 'Unknown / Deleted';
+      if (courseDataMap[courseName] === undefined) courseDataMap[courseName] = 0;
+      courseDataMap[courseName] += item.count;
     });
 
-  res.status(200).json({
-    success: true,
-    data: {
-      summary: {
-        totalLeads,
-        enrolledLeads: enrolledCount,
-        conversionRate: Number(conversionRate),
-        pendingFollowUps
-      },
-      leadsByStatus,
-      leadsByCourse,
-      recentLeads
-    }
-  });
+    const leadsByCourse = Object.keys(courseDataMap).map(key => ({ name: key, value: courseDataMap[key] }));
+
+    // Get recent leads
+    const recentLeadsRaw = await Lead.find()
+      .sort({ submitted_at: -1 })
+      .limit(5)
+      .populate('interested_course_id', 'course_name');
+
+    const recentLeads = recentLeadsRaw.map(lead => ({
+      id: lead._id,
+      full_name: lead.full_name,
+      email: lead.email,
+      mobile_number: lead.mobile_number,
+      status: lead.status,
+      course_name: lead.interested_course_id ? lead.interested_course_id.course_name : 'N/A',
+      submitted_at: lead.submitted_at
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        summary: {
+          totalLeads,
+          enrolledLeads,
+          conversionRate: Number(conversionRate),
+          pendingFollowUps
+        },
+        leadsByStatus,
+        leadsByCourse,
+        recentLeads
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching admin stats:', error);
+    res.status(500).json({ success: false, message: 'Server error fetching statistics' });
+  }
 };
 
 module.exports = {

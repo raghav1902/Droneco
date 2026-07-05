@@ -91,16 +91,16 @@ const StudentLeads = ({
                   <td>{new Date(lead.created_at || new Date()).toLocaleDateString()}</td>
                   <td>
                     <div style={{ fontWeight: 600 }}>{lead.full_name}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{ }</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}></div>
                   </td>
                   <td>{getCourseName(lead.course_id)}</td>
                   <td>{lead.city || 'N/A'}</td>
                   <td>
                     <span className={`status-badge ${lead.status === 'Enrolled' ? 'status-success' :
-                        lead.status === 'Approved' ? 'status-success' :
-                          lead.status === 'Interested' ? 'status-info' :
-                            lead.status === 'Not Interested' ? 'status-error' :
-                              'status-warning'
+                      lead.status === 'Approved' ? 'status-success' :
+                        lead.status === 'Interested' ? 'status-info' :
+                          lead.status === 'Not Interested' ? 'status-error' :
+                            'status-warning'
                       }`}>
                       {lead.status}
                     </span>

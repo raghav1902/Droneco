@@ -1,17 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, AlertCircle } from 'lucide-react';
 import { showToast } from '../../utils/toast.js';
 
 
-const mockDues = [];
+import API from '../../api/api.js';
 
 const DueList = () => {
   const [search, setSearch] = useState('');
-  
-  const filteredDues = mockDues.filter(student => 
-    student.name.toLowerCase().includes(search.toLowerCase()) || 
-    student.id.toLowerCase().includes(search.toLowerCase())
-  );
+  const [dues, setDues] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDues = async () => {
+      try {
+        const res = await API.get('/fees/dues');
+        setDues(res.data.data);
+      } catch (err) {
+        console.error('Failed to fetch due list:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDues();
+  }, []);
+
+  const filteredDues = dues.filter(fee => {
+    const name = fee.lead_id?.full_name || '';
+    return name.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
     <div className="animate-fade-in">
@@ -26,10 +42,10 @@ const DueList = () => {
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '1rem' }}>
           <div style={{ position: 'relative' }}>
             <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="Search by student name or ID..." 
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Search by student name or ID..."
               style={{ paddingLeft: '2.5rem' }}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -56,30 +72,27 @@ const DueList = () => {
               <th style={{ padding: '1rem 1.5rem' }}>Student ID</th>
               <th style={{ padding: '1rem 1.5rem' }}>Name</th>
               <th style={{ padding: '1rem 1.5rem' }}>Class / Course</th>
-              <th style={{ padding: '1rem 1.5rem' }}>Due Date</th>
               <th style={{ padding: '1rem 1.5rem' }}>Due Amount</th>
+              <th style={{ padding: '1rem 1.5rem' }}>Total Fee</th>
               <th style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>Action</th>
             </tr>
           </thead>
           <tbody>
-            {filteredDues.map((student) => (
-              <tr key={student.id} style={{ borderBottom: '1px solid var(--border)' }} className="table-row-hover">
-                <td style={{ padding: '1rem 1.5rem', color: 'var(--text-secondary)' }}>{student.id}</td>
+            {filteredDues.map((fee) => (
+              <tr key={fee.id} style={{ borderBottom: '1px solid var(--border)' }} className="table-row-hover">
+                <td style={{ padding: '1rem 1.5rem', color: 'var(--text-secondary)' }}>{fee.lead_id?._id?.substring(0, 8)}</td>
                 <td style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>
-                  {student.name}
-                  {student.status === 'Overdue' && (
-                    <AlertCircle size={14} style={{ display: 'inline', marginLeft: '0.5rem', color: 'var(--danger)' }} />
-                  )}
+                  {fee.lead_id?.full_name || 'Unknown'}
+                  <AlertCircle size={14} style={{ display: 'inline', marginLeft: '0.5rem', color: 'var(--danger)' }} />
                 </td>
                 <td style={{ padding: '1rem 1.5rem' }}>
-                  <div style={{ fontSize: '0.9rem' }}>{student.class}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{student.course}</div>
-                </td>
-                <td style={{ padding: '1rem 1.5rem', color: student.status === 'Overdue' ? 'var(--danger)' : 'var(--text-main)' }}>
-                  {student.dueDate}
+                  <div style={{ fontSize: '0.9rem' }}>{fee.course_id?.course_name || 'N/A'}</div>
                 </td>
                 <td style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--warning)' }}>
-                  ₹{student.dueAmount}
+                  ₹{fee.due_amount?.toLocaleString()}
+                </td>
+                <td style={{ padding: '1rem 1.5rem', color: 'var(--text-main)' }}>
+                  ₹{fee.net_payable?.toLocaleString()}
                 </td>
                 <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
                   <button className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }} onClick={(e) => { e.preventDefault(); showToast('Action processed successfully!', 'success'); }}>Send Reminder</button>

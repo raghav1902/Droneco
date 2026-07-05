@@ -1,6 +1,6 @@
 export const showToast = (message, type = 'success') => {
   const toastContainer = document.getElementById('toast-container') || createToastContainer();
-  
+
   const toast = document.createElement('div');
   toast.className = `toast toast-${type} animate-fade-in`;
   toast.innerHTML = `
@@ -9,9 +9,9 @@ export const showToast = (message, type = 'success') => {
       <span>${message}</span>
     </div>
   `;
-  
+
   toastContainer.appendChild(toast);
-  
+
   setTimeout(() => {
     toast.style.opacity = '0';
     toast.style.transform = 'translateY(10px)';
@@ -32,7 +32,7 @@ const createToastContainer = () => {
     z-index: 9999;
   `;
   document.body.appendChild(container);
-  
+
   const style = document.createElement('style');
   style.innerHTML = `
     .toast {
@@ -49,6 +49,6 @@ const createToastContainer = () => {
     .toast-error { background: #ef4444; }
   `;
   document.head.appendChild(style);
-  
+
   return container;
 };

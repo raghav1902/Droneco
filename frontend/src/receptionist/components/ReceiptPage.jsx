@@ -25,7 +25,7 @@ const ReceiptPage = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid var(--border)', paddingBottom: '2rem', marginBottom: '2rem' }}>
           <div>
             <h1 style={{ fontSize: '2rem', color: 'var(--accent-hex)', fontWeight: 700, letterSpacing: '-1px' }}>INSTITUTE</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.5rem' }}>123 Education Lane, Tech District<br/>contact@institute.edu | +1 234-567-8900</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.5rem' }}>123 Education Lane, Tech District<br />contact@institute.edu | +1 234-567-8900</p>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: 'var(--success)', marginBottom: '0.5rem' }}>

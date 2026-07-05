@@ -2,15 +2,29 @@ import React, { useState } from 'react';
 import { Eye, Edit, CreditCard, Printer, MoreVertical, Search, Filter, UserPlus, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { showToast } from '../../../utils/toast.js';
 
-const mockStudents = [
-  { id: 'DRN2026001', name: 'Rahul Sharma', email: 'rahul.s@example.com', phone: '+91 9876543210', course: 'Full Stack Web Development', batch: 'Morning', status: 'Active', feeStatus: 'Paid' },
-  { id: 'DRN2026002', name: 'Priya Patel', email: 'priya.p@example.com', phone: '+91 9876543211', course: 'Data Science with Python', batch: 'Evening', status: 'Active', feeStatus: 'Pending' },
-  { id: 'DRN2026003', name: 'Amit Kumar', email: 'amit.k@example.com', phone: '+91 9876543212', course: 'Digital Marketing', batch: 'Weekend', status: 'Inactive', feeStatus: 'Overdue' }
-];
+import API from '../../../api/api.js';
 
 const StudentsList = ({ onViewProfile, onCollectFee, onEnrollNew }) => {
   const [search, setSearch] = useState('');
   const [activeMenu, setActiveMenu] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const res = await API.get('/leads');
+        // Filter those who are Enrolled
+        const enrolled = res.data.data.filter(l => l.status === 'Enrolled');
+        setStudents(enrolled);
+      } catch (error) {
+        console.error('Failed to fetch students:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStudents();
+  }, []);
 
   const toggleMenu = (id) => {
     if (activeMenu === id) setActiveMenu(null);
@@ -18,7 +32,7 @@ const StudentsList = ({ onViewProfile, onCollectFee, onEnrollNew }) => {
   };
 
   const getFeeBadge = (status) => {
-    switch(status) {
+    switch (status) {
       case 'Paid': return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700"><CheckCircle className="w-3 h-3" /> Paid</span>;
       case 'Pending': return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700"><Clock className="w-3 h-3" /> Pending</span>;
       case 'Overdue': return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-700"><AlertCircle className="w-3 h-3" /> Overdue</span>;
@@ -82,7 +96,11 @@ const StudentsList = ({ onViewProfile, onCollectFee, onEnrollNew }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {mockStudents.map((student) => (
+            {loading ? (
+              <tr>
+                <td colSpan="6" className="py-12 text-center text-muted-foreground">Loading students...</td>
+              </tr>
+            ) : students.map((student) => (
               <tr key={student.id} className="hover:bg-muted/30 transition-colors group">
                 <td className="py-4 px-6">
                   <span className="font-semibold text-primary">{student.id}</span>
@@ -90,35 +108,36 @@ const StudentsList = ({ onViewProfile, onCollectFee, onEnrollNew }) => {
                 <td className="py-4 px-6">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shadow-sm">
-                      {student.name.split(' ').map(n => n[0]).join('')}
+                      {student.full_name?.charAt(0) || 'S'}
                     </div>
                     <div>
-                      <div className="font-semibold text-foreground">{student.name}</div>
+                      <div className="font-semibold text-foreground">{student.full_name}</div>
                       <div className="text-xs text-muted-foreground">{student.email}</div>
-                      <div className="text-xs text-muted-foreground">{student.phone}</div>
+                      <div className="text-xs text-muted-foreground">{student.mobile_number}</div>
                     </div>
                   </div>
                 </td>
                 <td className="py-4 px-6">
-                  <div className="text-sm font-medium text-foreground">{student.course}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{student.batch} Batch</div>
+                  <div className="text-sm font-medium text-foreground">{student.interested_course_id?.course_name || 'N/A'}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">N/A Batch</div>
                 </td>
                 <td className="py-4 px-6">
-                  <span className={`inline-flex px-2 py-1 rounded-md text-xs font-medium border ${student.status === 'Active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
+                  <span className={`inline-flex px-2 py-1 rounded-md text-xs font-medium border border-emerald-200 bg-emerald-50 text-emerald-700`}>
                     {student.status}
                   </span>
                 </td>
                 <td className="py-4 px-6">
-                  {getFeeBadge(student.feeStatus)}
+                  {/* Fee status is now on the Fee model, we'll need to fetch that separately or show N/A for now */}
+                  <span className="text-muted-foreground text-xs">Verify in Collect Fee</span>
                 </td>
                 <td className="py-4 px-6 text-right relative">
-                  <button 
+                  <button
                     className="p-2 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors"
                     onClick={() => toggleMenu(student.id)}
                   >
                     <MoreVertical className="w-5 h-5" />
                   </button>
-                  
+
                   {activeMenu === student.id && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setActiveMenu(null)}></div>
@@ -146,7 +165,7 @@ const StudentsList = ({ onViewProfile, onCollectFee, onEnrollNew }) => {
                 </td>
               </tr>
             ))}
-            {mockStudents.length === 0 && (
+            {(!loading && students.length === 0) && (
               <tr>
                 <td colSpan="6" className="py-12 text-center text-muted-foreground">
                   No students found matching your search.

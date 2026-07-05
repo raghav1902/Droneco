@@ -1,20 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { DollarSign, Users, CreditCard, TrendingUp, Clock } from 'lucide-react';
-import { showToast } from '../../utils/toast.js';
-
-
-const mockRevenueData = [
-  { name: 'Jan', collected: 0, pending: 0 },
-  { name: 'Feb', collected: 0, pending: 0 },
-  { name: 'Mar', collected: 0, pending: 0 },
-  { name: 'Apr', collected: 0, pending: 0 },
-  { name: 'May', collected: 0, pending: 0 },
-  { name: 'Jun', collected: 0, pending: 0 },
-  { name: 'Jul', collected: 0, pending: 0 },
-];
-
-const mockRecentTransactions = [];
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { DollarSign, Users, Clock, TrendingUp } from 'lucide-react';
+import API from '../../api/api';
 
 const StatCard = ({ title, value, icon: Icon, colorClass }) => (
   <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: `4px solid var(--${colorClass})` }}>
@@ -29,6 +16,27 @@ const StatCard = ({ title, value, icon: Icon, colorClass }) => (
 );
 
 const FeeDashboard = () => {
+  const [data, setData] = useState({
+    summary: { totalCollected: 0, totalPending: 0, todaysCollection: 0, totalStudents: 0 },
+    recentTransactions: [],
+    revenueTrend: []
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await API.get('/admin/reports');
+        setData(res.data.data);
+      } catch (err) {
+        console.error('Error fetching fee dashboard:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, []);
+
   return (
     <div className="animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -45,10 +53,10 @@ const FeeDashboard = () => {
 
       {/* Quick Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-        <StatCard title="Total Fees Collected" value="₹0" icon={DollarSign} colorClass="success" />
-        <StatCard title="Pending Fees" value="₹0" icon={Clock} colorClass="warning" />
-        <StatCard title="Today's Collection" value="₹0" icon={TrendingUp} colorClass="accent" />
-        <StatCard title="Total Students" value="842" icon={Users} colorClass="text-secondary" />
+        <StatCard title="Total Fees Collected" value={`₹${data.summary.totalCollected.toLocaleString()}`} icon={DollarSign} colorClass="success" />
+        <StatCard title="Pending Fees" value={`₹${data.summary.totalPending.toLocaleString()}`} icon={Clock} colorClass="warning" />
+        <StatCard title="Today's Collection" value={`₹${data.summary.todaysCollection.toLocaleString()}`} icon={TrendingUp} colorClass="accent" />
+        <StatCard title="Total Students" value={data.summary.totalStudents} icon={Users} colorClass="text-secondary" />
       </div>
 
       {/* Charts */}
@@ -57,13 +65,13 @@ const FeeDashboard = () => {
           <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', color: 'var(--text-secondary)' }}>Revenue Trends</h3>
           <div style={{ height: '300px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mockRevenueData}>
+              <BarChart data={data.revenueTrend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="name" stroke="var(--text-secondary)" />
                 <YAxis stroke="var(--text-secondary)" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)', color: 'var(--text-main)' }} 
-                  itemStyle={{ color: 'var(--text-main)' }} 
+                <Tooltip
+                  contentStyle={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)', color: 'var(--text-main)' }}
+                  itemStyle={{ color: 'var(--text-main)' }}
                 />
                 <Legend />
                 <Bar dataKey="collected" fill="var(--success)" name="Collected" />
@@ -87,7 +95,7 @@ const FeeDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {mockRecentTransactions.map(txn => (
+                {data.recentTransactions.map(txn => (
                   <tr key={txn.id} style={{ borderBottom: '1px solid var(--border)' }} className="table-row-hover">
                     <td style={{ padding: '0.75rem 1rem', fontSize: '0.9rem' }}>{txn.id}</td>
                     <td style={{ padding: '0.75rem 1rem', fontWeight: 500 }}>{txn.studentName}</td>
@@ -102,7 +110,7 @@ const FeeDashboard = () => {
                     </td>
                   </tr>
                 ))}
-                {mockRecentTransactions.length === 0 && (
+                {data.recentTransactions.length === 0 && (
                   <tr>
                     <td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No recent transactions.</td>
                   </tr>

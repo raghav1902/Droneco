@@ -12,7 +12,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [showExpiredMsg, setShowExpiredMsg] = useState(false);
-  
+
   const { login, isAuthenticated, user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,7 +28,7 @@ const Login = () => {
   // If already authenticated, redirect to appropriate dashboard
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.role === 'admin') {
+      if (user.role?.toLowerCase() === 'admin') {
         navigate('/admin');
       } else {
         navigate('/receptionist');

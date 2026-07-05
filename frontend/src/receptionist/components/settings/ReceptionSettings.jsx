@@ -50,7 +50,7 @@ const ProfileSettings = () => {
       <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Profile Settings</h3>
       <div className="glass-card" style={{ padding: '2rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxWidth: '500px' }}>
-          
+
           <div className="form-group">
             <label className="form-label">Profile Picture</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -72,18 +72,18 @@ const ProfileSettings = () => {
             <label className="form-label">Full Name</label>
             <input type="text" className="form-input" value={name} onChange={e => setName(e.target.value)} />
           </div>
-          
+
           <div className="form-group">
             <label className="form-label">Email Address</label>
             <input type="email" className="form-input" value={user?.email || ""} disabled style={{ opacity: 0.7, cursor: 'not-allowed' }} />
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Contact admin to change email address.</p>
           </div>
-          
+
           <div className="form-group">
             <label className="form-label">Phone Number</label>
             <input type="text" className="form-input" value={phone} onChange={e => setPhone(e.target.value)} />
           </div>
-          
+
         </div>
         <button className="btn btn-primary" style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={handleUpdate} disabled={loading}>
           <Save size={16} /> {loading ? 'Updating...' : 'Update Profile'}
@@ -143,12 +143,12 @@ const ReceptionSettings = () => {
             <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.5rem', paddingLeft: '0.5rem' }}>Settings</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
               {menuItems.map(item => (
-                <button 
+                <button
                   key={item.id}
                   className={`btn ${activeSection === item.id ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ 
-                    justifyContent: 'flex-start', 
-                    padding: '0.75rem 1rem', 
+                  style={{
+                    justifyContent: 'flex-start',
+                    padding: '0.75rem 1rem',
                     borderColor: 'transparent',
                     background: activeSection === item.id ? 'var(--accent-hex)' : 'transparent',
                     color: activeSection === item.id ? '#fff' : 'var(--text-main)',

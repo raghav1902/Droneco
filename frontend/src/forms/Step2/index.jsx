@@ -22,7 +22,7 @@ const Step2 = ({
           <div key={q.id} className="form-group">
             <label className="form-label">{getCustomizedQuestionText(q.question_text)} {q.is_required && '*'}</label>
 
-            {q.field_type === 'text' && (
+            {q.type === 'text' && (
               <input
                 type="text"
                 className="form-input"
@@ -32,7 +32,7 @@ const Step2 = ({
               />
             )}
 
-            {q.field_type === 'dropdown' && (
+            {q.type === 'dropdown' && (
               <select
                 className="form-select"
                 value={formData.responses[q.id] || ''}
@@ -45,7 +45,7 @@ const Step2 = ({
               </select>
             )}
 
-            {q.field_type === 'radio' && (
+            {q.type === 'radio' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '0.5rem' }}>
                 {q.options.map(opt => (
                   <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '0.925rem' }}>
@@ -63,7 +63,7 @@ const Step2 = ({
               </div>
             )}
 
-            {q.field_type === 'checkbox' && (
+            {q.type === 'checkbox' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '0.5rem' }}>
                 {q.options.map(opt => {
                   const currentValues = formData.responses[q.id] ? formData.responses[q.id].split(', ') : [];

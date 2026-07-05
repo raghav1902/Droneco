@@ -29,9 +29,9 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  if (allowedRoles && (!user.role || !allowedRoles.includes(user.role.toLowerCase()))) {
     // Redirect to their default dashboard if role is incorrect
-    return <Navigate to={user.role === 'admin' ? '/admin' : '/receptionist'} replace />;
+    return <Navigate to={user?.role?.toLowerCase() === 'admin' ? '/admin' : '/receptionist'} replace />;
   }
 
   return children;
@@ -40,7 +40,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 const App = () => {
   return (
     <AuthProvider>
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <div className="app-container">
           <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <Routes>

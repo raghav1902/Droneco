@@ -9,7 +9,7 @@ const authorize = (...roles) => {
       return res.status(401).json({ success: false, message: 'Not authorized' });
     }
 
-    if (!roles.includes(req.user.role)) {
+    if (!req.user.role || !roles.map(r => r.toLowerCase()).includes(req.user.role.toLowerCase())) {
       return res.status(403).json({
         success: false,
         message: `User role '${req.user.role}' is not authorized to access this resource`

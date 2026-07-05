@@ -1,99 +1,172 @@
 /**
  * @file authController.js
- * @description Controller for staff authentication (login, profile verification).
+ * @description Controller for staff authentication (login, profile verification) using MongoDB.
  */
 
 const jwt = require('jsonwebtoken');
-const { users } = require('../../database/store');
+const User = require('../../models/User/User');
+const Role = require('../../models/Role/Role');
+
+// Generate JWT Helper
+const generateToken = (id) => {
+  return jwt.sign(
+    { id },
+    process.env.JWT_SECRET || 'YOUR_JWT_SUPER_SECRET_KEY',
+    { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+  );
+};
+
+// @desc    Register a new user (Admin / Receptionist)
+// @route   POST /api/auth/register
+// @access  Public (for seeding purposes initially)
+const registerUser = async (req, res) => {
+  try {
+    const { name, email, password, roleName } = req.body;
+
+    if (!name || !email || !password || !roleName) {
+      return res.status(400).json({ success: false, message: 'Please provide all required fields (name, email, password, roleName)' });
+    }
+
+    // Check if user already exists
+    const userExists = await User.findOne({ email: email.toLowerCase() });
+    if (userExists) {
+      return res.status(400).json({ success: false, message: 'User already exists' });
+    }
+
+    // Find the role, or create it if it doesn't exist (helpful for initial setup)
+    let role = await Role.findOne({ name: roleName });
+    if (!role) {
+      role = await Role.create({ name: roleName, permissions: [] });
+    }
+
+    // Create user
+    const user = await User.create({
+      name,
+      email: email.toLowerCase(),
+      password, // Pre-save hook hashes it
+      role: role._id
+    });
+
+    if (user) {
+      res.status(201).json({
+        success: true,
+        message: 'User registered successfully',
+        data: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: role.name,
+          token: generateToken(user._id)
+        }
+      });
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid user data' });
+    }
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).json({ success: false, message: 'Server error registering user' });
+  }
+};
 
 // @desc    Auth user & get token
 // @route   POST /api/auth/login
 // @access  Public
-const loginUser = (req, res) => {
-  const { email, password } = req.body;
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-  // Basic validation
-  if (!email || !password) {
-    return res.status(400).json({ success: false, message: 'Please provide email and password' });
-  }
-
-  // Find user in in-memory store
-  const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-  // Check if user exists and password matches (plain-text comparison for in-memory phase)
-  if (user && user.password === password) {
-    if (user.status !== 'active') {
-      return res.status(401).json({ success: false, message: 'Account is deactivated' });
+    // Basic validation
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Please provide email and password' });
     }
 
-    // Generate JWT
-    const token = jwt.sign(
-      { id: user.id, role: user.role },
-      process.env.JWT_SECRET || 'YOUR_JWT_SUPER_SECRET_KEY',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
-    );
+    // Find user by email and include password for validation, also populate role
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password').populate('role');
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        profile_photo: user.profile_photo,
-        role: user.role,
-        token
+    // Check user and password
+    if (user && (await user.matchPassword(password))) {
+      if (user.status !== 'active') {
+        return res.status(401).json({ success: false, message: 'Account is deactivated' });
       }
-    });
-  } else {
-    return res.status(401).json({ success: false, message: 'Invalid email or password' });
+
+      res.status(200).json({
+        success: true,
+        data: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          profile_photo: user.profile_photo,
+          role: user.role.name,
+          token: generateToken(user._id)
+        }
+      });
+    } else {
+      res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+  } catch (error) {
+    console.error('Error logging in user:', error);
+    res.status(500).json({ success: false, message: 'Server error during login' });
   }
 };
 
 // @desc    Get current user profile
 // @route   GET /api/auth/me
 // @access  Private
-const getMe = (req, res) => {
-  // req.user is attached by the protect middleware
-  res.status(200).json({
-    success: true,
-    data: req.user
-  });
+const getMe = async (req, res) => {
+  try {
+    // req.user is attached by the protect middleware, which is already a clean object
+    res.status(200).json({
+      success: true,
+      data: req.user
+    });
+  } catch (error) {
+    console.error('Error getting profile:', error);
+    res.status(500).json({ success: false, message: 'Server error fetching profile' });
+  }
 };
 
 // @desc    Update current user profile
 // @route   PUT /api/auth/profile
 // @access  Private
-const updateProfile = (req, res) => {
-  const { name, phone, profile_photo } = req.body;
-  const user = users.find(u => u.id === req.user.id);
+const updateProfile = async (req, res) => {
+  try {
+    const { name, phone, profile_photo } = req.body;
 
-  if (!user) {
-    return res.status(404).json({ success: false, message: 'User not found' });
-  }
+    // Find user using ID from protect middleware
+    const user = await User.findById(req.user.id).populate('role');
 
-  // Update fields if provided
-  if (name) user.name = name;
-  if (phone !== undefined) user.phone = phone;
-  if (profile_photo !== undefined) user.profile_photo = profile_photo;
-
-  // We should also update the req.user since it's the same object reference in memory,
-  // but to be safe we just return the updated user from the store
-  res.status(200).json({
-    success: true,
-    message: 'Profile updated successfully',
-    data: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      profile_photo: user.profile_photo,
-      role: user.role
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
-  });
+
+    // Update fields if provided
+    if (name) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+    if (profile_photo !== undefined) user.profile_photo = profile_photo;
+
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        profile_photo: updatedUser.profile_photo,
+        role: updatedUser.role.name
+      }
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ success: false, message: 'Server error updating profile' });
+  }
 };
 
 module.exports = {
+  registerUser,
   loginUser,
   getMe,
   updateProfile

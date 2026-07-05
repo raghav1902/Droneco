@@ -1,16 +1,16 @@
 import React from 'react';
 import { Users, GraduationCap } from 'lucide-react';
 
-const Step1 = ({ 
-  currentStep, 
-  setCurrentStep, 
-  formData, 
-  setFormData, 
-  validationErrors, 
-  handleBasicChange, 
-  courses, 
-  prevStep, 
-  nextStep 
+const Step1 = ({
+  currentStep,
+  setCurrentStep,
+  formData,
+  setFormData,
+  validationErrors,
+  handleBasicChange,
+  courses,
+  prevStep,
+  nextStep
 }) => {
   return (
     <>
