@@ -61,7 +61,7 @@ const AppLayout = ({ role, activeTab, setActiveTab, children }) => {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-app)' }}>
       {/* Top Navbar */}
-      <nav style={{
+      <nav className="no-print" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -100,7 +100,7 @@ const AppLayout = ({ role, activeTab, setActiveTab, children }) => {
       {/* Main Content Area */}
       <main style={{ padding: '2.5rem', maxWidth: '1600px', margin: '0 auto', width: '100%', flex: 1 }}>
         {/* Header Section */}
-        <div style={{ marginBottom: '2rem' }}>
+        <div className="no-print" style={{ marginBottom: '2rem' }}>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
             {title}
           </h1>
@@ -111,7 +111,7 @@ const AppLayout = ({ role, activeTab, setActiveTab, children }) => {
 
         {/* Horizontal Tabs */}
         {activeTab && setActiveTab && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '2.5rem' }}>
+          <div className="no-print" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '2.5rem' }}>
             {tabs.map(tab => (
               <button
                 key={tab.id}

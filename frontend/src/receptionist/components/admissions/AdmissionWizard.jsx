@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { showToast } from '../../../utils/toast.js';
+import { admissionSchema, validateForm } from '../../../utils/validators.js';
 import API from '../../../api/api.js';
 import {
   CheckCircle, User, FileText, UploadCloud,
@@ -146,17 +147,28 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
         return;
       }
 
+      const payload = {
+        lead_id: lead.id,
+        course_id: String(formData.courseSelected),
+        total_amount: admissionFee + courseFee,
+        discount_amount: discount,
+        tax_amount: tax
+      };
+
+      const validation = validateForm(admissionSchema, payload);
+      if (!validation.success) {
+        const msgs = Object.values(validation.errors).join(', ');
+        showToast(msgs, 'error');
+        submitLock.current = false;
+        setIsSubmitting(false);
+        return;
+      }
+
       // Mark lead as Enrolled
       await API.patch(`/leads/${lead.id}/status`, { status: 'Enrolled' });
 
       // Create Fee Structure
-      const feeRes = await API.post('/fees', {
-        lead_id: lead.id,
-        course_id: formData.courseSelected,
-        total_amount: admissionFee + courseFee,
-        discount_amount: discount,
-        tax_amount: tax
-      });
+      const feeRes = await API.post('/fees', payload);
       const feeId = feeRes.data.data.id;
 
       // Record Initial Payment if any amount was collected

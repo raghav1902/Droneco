@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import API from '../api/api.js';
 import {
   LayoutDashboard, Users, UserPlus, CreditCard,
   Receipt, FileBarChart, Settings, ChevronLeft,
@@ -7,6 +8,21 @@ import {
 
 const Sidebar = ({ role, activeTab, setActiveTab }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await API.get('/settings');
+        if (response.data.success && response.data.data) {
+          setSettings(response.data.data);
+        }
+      } catch (error) {
+        console.error('Failed to load settings for sidebar:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const adminMenu = [
     { title: 'Dashboard', icon: LayoutDashboard, id: 'dashboard' },
@@ -84,16 +100,24 @@ const Sidebar = ({ role, activeTab, setActiveTab }) => {
       <div className="flex items-center justify-between p-4 border-b border-border h-16">
         {!collapsed && (
           <div className="flex items-center gap-2 font-bold text-lg text-primary truncate">
-            <div className="w-8 h-8 rounded bg-primary text-primary-foreground flex items-center justify-center font-bold">
-              IA
-            </div>
-            Institute Admin
+            {settings?.institute?.logo ? (
+              <img src={settings.institute.logo} alt="Logo" className="w-8 h-8 rounded object-contain" />
+            ) : (
+              <div className="w-8 h-8 rounded bg-primary text-primary-foreground flex items-center justify-center font-bold">
+                {settings?.institute?.name ? settings.institute.name.charAt(0).toUpperCase() : 'IA'}
+              </div>
+            )}
+            <span className="truncate">{settings?.institute?.name || (role === 'admin' ? 'Institute Admin' : 'Institute Portal')}</span>
           </div>
         )}
         {collapsed && (
-          <div className="w-8 h-8 mx-auto rounded bg-primary text-primary-foreground flex items-center justify-center font-bold">
-            IA
-          </div>
+          settings?.institute?.logo ? (
+            <img src={settings.institute.logo} alt="Logo" className="w-8 h-8 mx-auto rounded object-contain" />
+          ) : (
+            <div className="w-8 h-8 mx-auto rounded bg-primary text-primary-foreground flex items-center justify-center font-bold">
+              {settings?.institute?.name ? settings.institute.name.charAt(0).toUpperCase() : 'IA'}
+            </div>
+          )
         )}
       </div>
 

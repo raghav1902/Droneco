@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import API from '../api/api';
+import { createLeadSchema, validateForm } from '../utils/validators';
 
 import Step1 from './Step1';
 import Step2 from './Step2';
@@ -121,56 +122,13 @@ const StudentForm = () => {
 
   // Validate Step 1
   const validateStep1 = () => {
-    const errors = {};
-
-    if (formData.filler_type === 'guardian') {
-      // Validate guardian details
-      if (!formData.guardian_name || !formData.guardian_name.trim()) {
-        errors.guardian_name = 'Guardian Name is required';
-      }
-      if (!formData.guardian_phone || !formData.guardian_phone.trim()) {
-        errors.guardian_phone = 'Guardian Mobile is required';
-      } else if (!/^\d{10}$/.test(formData.guardian_phone.replace(/[-+ ]/g, ''))) {
-        errors.guardian_phone = 'Enter a valid 10-digit mobile number';
-      }
-      if (!formData.guardian_relation) {
-        errors.guardian_relation = 'Relationship is required';
-      }
-
-      // Validate student details
-      if (!formData.full_name.trim()) {
-        errors.full_name = "Student's Full Name is required";
-      }
-      if (formData.email && formData.email.trim()) {
-        if (!/\S+@\S+\.\S+/.test(formData.email)) {
-          errors.email = 'Invalid email format';
-        }
-      }
-      if (formData.mobile_number && formData.mobile_number.trim()) {
-        if (!/^\d{10}$/.test(formData.mobile_number.replace(/[-+ ]/g, ''))) {
-          errors.mobile_number = 'Enter a valid 10-digit mobile number';
-        }
-      }
-    } else {
-      // Validate student details (Standard)
-      if (!formData.full_name.trim()) errors.full_name = 'Full Name is required';
-      if (!formData.email.trim()) {
-        errors.email = 'Email is required';
-      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-        errors.email = 'Invalid email format';
-      }
-      if (!formData.mobile_number.trim()) {
-        errors.mobile_number = 'Mobile number is required';
-      } else if (!/^\d{10}$/.test(formData.mobile_number.replace(/[-+ ]/g, ''))) {
-        errors.mobile_number = 'Enter a valid 10-digit mobile number';
-      }
+    const result = validateForm(createLeadSchema, formData);
+    if (!result.success) {
+      setValidationErrors(result.errors);
+      return false;
     }
-
-    if (!formData.city.trim()) errors.city = 'City is required';
-    if (!formData.interested_course_id) errors.interested_course_id = 'Please select a course';
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
+    setValidationErrors({});
+    return true;
   };
 
   // Validate Step 2 (Dynamic Questions)

@@ -5,7 +5,7 @@ import { showToast } from '../../utils/toast.js';
 
 import API from '../../api/api.js';
 
-const PaymentHistory = () => {
+const PaymentHistory = ({ onViewReceipt }) => {
   const [search, setSearch] = useState('');
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +75,7 @@ const PaymentHistory = () => {
                   </span>
                 </td>
                 <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
-                  <button className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }} onClick={(e) => { e.preventDefault(); showToast('Receipt Viewer Coming Soon!', 'info'); }}>View Receipt</button>
+                  <button className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }} onClick={(e) => { e.preventDefault(); if (onViewReceipt) onViewReceipt(txn); }}>View Receipt</button>
                 </td>
               </tr>
             ))}

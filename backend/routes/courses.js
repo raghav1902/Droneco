@@ -16,6 +16,8 @@ const { protect } = require('../middleware/authentication/authMiddleware');
 const { authorize } = require('../middleware/authorization/roleMiddleware');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User/User');
+const { validate } = require('../middleware/validationMiddleware');
+const { courseSchema } = require('../validators/schemas');
 
 // Optional auth helper for GET / (Allows public access but attaches user if token exists)
 const optionalProtect = async (req, res, next) => {
@@ -43,8 +45,8 @@ const optionalProtect = async (req, res, next) => {
 
 router.get('/', optionalProtect, getCourses);
 router.get('/:id', optionalProtect, getCourseById);
-router.post('/', protect, authorize('Admin'), createCourse); // Note: authorize uses exactly what req.user.role is
-router.put('/:id', protect, authorize('Admin'), updateCourse);
+router.post('/', protect, authorize('Admin'), validate(courseSchema), createCourse); // Note: authorize uses exactly what req.user.role is
+router.put('/:id', protect, authorize('Admin'), validate(courseSchema), updateCourse);
 router.delete('/:id', protect, authorize('Admin'), toggleCourseStatus);
 
 module.exports = router;

@@ -74,6 +74,7 @@ app.use('/api/fees', require('./routes/feeRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/discounts', require('./routes/discountRoutes'));
+app.use('/api/settings', require('./routes/settingsRoutes'));
 
 // 404 Route handler
 app.use((req, res, next) => {

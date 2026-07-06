@@ -165,9 +165,43 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// @desc    Change user password
+// @route   PUT /api/auth/change-password
+// @access  Private
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Please provide current and new passwords' });
+    }
+
+    // Find user and explicitly select password since it has select: false
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Check if current password matches
+    if (!(await user.matchPassword(currentPassword))) {
+      return res.status(401).json({ success: false, message: 'Incorrect current password' });
+    }
+
+    // Update password (pre-save hook will hash it)
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ success: false, message: 'Server error changing password' });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getMe,
-  updateProfile
+  updateProfile,
+  changePassword
 };

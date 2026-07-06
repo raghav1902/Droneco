@@ -38,8 +38,17 @@ const FeeDashboard = () => {
   }, []);
 
   return (
-    <div className="animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+    <div className="animate-fade-in dashboard-print-container">
+      <style>
+        {`
+          @media print {
+            .no-print { display: none !important; }
+            .dashboard-print-container { width: 100%; margin: 0; padding: 0; }
+            body { background: white; }
+          }
+        `}
+      </style>
+      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Fee Overview</h2>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <select className="form-select" style={{ width: 'auto' }}>
@@ -47,7 +56,7 @@ const FeeDashboard = () => {
             <option>Last 3 Months</option>
             <option>This Year</option>
           </select>
-          <button className="btn btn-primary" onClick={(e) => { e.preventDefault(); showToast('Action processed successfully!', 'success'); }}>Generate Report</button>
+          <button className="btn btn-primary" onClick={(e) => { e.preventDefault(); window.print(); }}>Generate Report</button>
         </div>
       </div>
 

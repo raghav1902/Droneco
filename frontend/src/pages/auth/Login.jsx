@@ -6,11 +6,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { authLoginSchema, validateForm } from '../../utils/validators';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [showExpiredMsg, setShowExpiredMsg] = useState(false);
 
   const { login, isAuthenticated, user, loading } = useAuth();
@@ -39,10 +41,12 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
     setShowExpiredMsg(false);
 
-    if (!email || !password) {
-      setError('Please enter both email and password');
+    const validation = validateForm(authLoginSchema, { email, password });
+    if (!validation.success) {
+      setFieldErrors(validation.errors);
       return;
     }
 
@@ -89,9 +93,9 @@ const Login = () => {
               className="form-input"
               placeholder="reception@institute.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              onChange={(e) => { setEmail(e.target.value); setFieldErrors(prev => ({...prev, email: null})) }}
             />
+            {fieldErrors.email && <div style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '0.25rem' }}>{fieldErrors.email}</div>}
           </div>
 
           <div className="form-group" style={{ marginBottom: '2rem' }}>
@@ -101,9 +105,9 @@ const Login = () => {
               className="form-input"
               placeholder="••••••••"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              onChange={(e) => { setPassword(e.target.value); setFieldErrors(prev => ({...prev, password: null})) }}
             />
+            {fieldErrors.password && <div style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '0.25rem' }}>{fieldErrors.password}</div>}
           </div>
 
           <button

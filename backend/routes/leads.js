@@ -13,14 +13,16 @@ const {
   getLeadFeedbackHistory
 } = require('../controllers/Lead/leadController');
 const { protect } = require('../middleware/authentication/authMiddleware');
+const { validate } = require('../middleware/validationMiddleware');
+const { createLeadSchema, updateLeadStatusSchema, addFeedbackSchema } = require('../validators/schemas');
 
 // Public route for submitting inquiries (from QR multi-step form)
-router.post('/', createLead);
+router.post('/', validate(createLeadSchema), createLead);
 
 // Protected routes for staff
 router.get('/', protect, getLeads);
-router.patch('/:id/status', protect, updateLeadStatus);
-router.post('/:id/feedback', protect, addLeadFeedback);
+router.patch('/:id/status', protect, validate(updateLeadStatusSchema), updateLeadStatus);
+router.post('/:id/feedback', protect, validate(addFeedbackSchema), addLeadFeedback);
 router.get('/:id/feedback', protect, getLeadFeedbackHistory);
 
 module.exports = router;

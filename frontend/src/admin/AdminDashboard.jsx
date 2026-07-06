@@ -8,6 +8,7 @@ import FeeStructure from './components/FeeStructure';
 import DiscountManagement from './components/DiscountManagement';
 import Reports from './components/Reports';
 import AdminSettings from './components/settings/AdminSettings';
+import { courseSchema, createQuestionSchema, validateForm } from '../utils/validators';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -112,6 +113,12 @@ const AdminDashboard = () => {
   const handleCourseSubmit = async (e) => {
     e.preventDefault();
     setCourseError(null);
+    const validation = validateForm(courseSchema, courseForm);
+    if (!validation.success) {
+      const msgs = Object.values(validation.errors).join(', ');
+      setCourseError(msgs);
+      return;
+    }
     try {
       if (editingCourseId) {
         await API.put(`/courses/${editingCourseId}`, courseForm);
@@ -151,6 +158,18 @@ const AdminDashboard = () => {
   const handleQuestionSubmit = async (e) => {
     e.preventDefault();
     setQuestionError(null);
+    const validation = validateForm(createQuestionSchema, {
+      question_text: questionForm.question_text,
+      step_number: Number(questionForm.step_number),
+      field_type: questionForm.field_type,
+      optionsString: questionForm.optionsString,
+      is_required: questionForm.is_required
+    });
+    if (!validation.success) {
+      const msgs = Object.values(validation.errors).join(', ');
+      setQuestionError(msgs);
+      return;
+    }
     try {
       const options = questionForm.optionsString
         ? questionForm.optionsString.split(',').map(o => o.trim()).filter(Boolean)

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Power } from 'lucide-react';
 import API from '../../api/api';
 import { showToast } from '../../utils/toast';
+import { discountSchema, validateForm } from '../../utils/validators';
 
 const DiscountManagement = () => {
   const [discounts, setDiscounts] = useState([]);
@@ -10,7 +11,7 @@ const DiscountManagement = () => {
 
   const [formData, setFormData] = useState({
     name: '',
-    type: 'Percentage',
+    type: 'percentage',
     value: 0
   });
 
@@ -59,6 +60,11 @@ const DiscountManagement = () => {
   };
 
   const handleSave = async () => {
+    const validation = validateForm(discountSchema, formData);
+    if (!validation.success) {
+      const msgs = Object.values(validation.errors).join(', ');
+      return showToast(msgs, 'error');
+    }
     try {
       if (editingId) {
         await API.put(`/discounts/${editingId}`, formData);
@@ -80,7 +86,7 @@ const DiscountManagement = () => {
           <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Discount Management</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>Configure scholarships and promotional discounts.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditingId(null); setFormData({ name: '', type: 'Percentage', value: 0 }); setShowModal(true); }}>
+        <button className="btn btn-primary" onClick={() => { setEditingId(null); setFormData({ name: '', type: 'percentage', value: 0 }); setShowModal(true); }}>
           <Plus size={18} /> Add Discount
         </button>
       </div>
@@ -96,7 +102,7 @@ const DiscountManagement = () => {
                 </span>
               </div>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent-hex)' }}>
-                {discount.type === 'Percentage' ? `${discount.value}%` : `₹${discount.value}`}
+                {discount.type === 'percentage' ? `${discount.value}%` : `₹${discount.value}`}
               </div>
             </div>
 
@@ -134,8 +140,8 @@ const DiscountManagement = () => {
                 <div>
                   <label className="form-label">Type</label>
                   <select className="form-select" value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
-                    <option value="Percentage">Percentage</option>
-                    <option value="Flat">Flat Amount</option>
+                    <option value="percentage">Percentage</option>
+                    <option value="fixed">Flat Amount</option>
                   </select>
                 </div>
                 <div>

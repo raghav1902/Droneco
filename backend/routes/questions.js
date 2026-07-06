@@ -15,6 +15,8 @@ const { protect } = require('../middleware/authentication/authMiddleware');
 const { authorize } = require('../middleware/authorization/roleMiddleware');
 const jwt = require('jsonwebtoken');
 const { users } = require('../database/store');
+const { validate } = require('../middleware/validationMiddleware');
+const { createQuestionSchema } = require('../validators/schemas');
 
 // Optional auth helper for GET /
 const optionalProtect = (req, res, next) => {
@@ -38,8 +40,8 @@ const optionalProtect = (req, res, next) => {
 };
 
 router.get('/', optionalProtect, getQuestions);
-router.post('/', protect, authorize('admin'), createQuestion);
-router.put('/:id', protect, authorize('admin'), updateQuestion);
+router.post('/', protect, authorize('admin'), validate(createQuestionSchema), createQuestion);
+router.put('/:id', protect, authorize('admin'), validate(createQuestionSchema), updateQuestion);
 router.delete('/:id', protect, authorize('admin'), toggleQuestionStatus);
 
 module.exports = router;

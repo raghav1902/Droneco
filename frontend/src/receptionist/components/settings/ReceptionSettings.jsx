@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, Shield, Save, Upload } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { showToast } from '../../../utils/toast.js';
+import { changePasswordSchema, validateForm } from '../../../utils/validators.js';
 
 
 const ProfileSettings = () => {
@@ -93,29 +94,71 @@ const ProfileSettings = () => {
   );
 };
 
-const AccountSettings = () => (
-  <div className="animate-fade-in">
-    <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Account Security</h3>
-    <div className="glass-card" style={{ padding: '2rem' }}>
-      <h4 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Change Password</h4>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', maxWidth: '400px' }}>
-        <div className="form-group">
-          <label className="form-label">Current Password</label>
-          <input type="password" className="form-input" />
+const AccountSettings = () => {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    const validation = validateForm(changePasswordSchema, { oldPassword: currentPassword, newPassword });
+    if (!validation.success) {
+      const msgs = Object.values(validation.errors).join(', ');
+      return showToast(msgs, 'error');
+    }
+    if (newPassword !== confirmPassword) {
+      return showToast('New passwords do not match', 'error');
+    }
+
+    setLoading(true);
+    try {
+      const { default: API } = await import('../../../api/api');
+      const response = await API.put('/auth/change-password', {
+        currentPassword,
+        newPassword
+      });
+      if (response.data.success) {
+        showToast('Password updated successfully!', 'success');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        showToast(response.data.message || 'Update failed', 'error');
+      }
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Error updating password', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="animate-fade-in">
+      <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Account Security</h3>
+      <div className="glass-card" style={{ padding: '2rem' }}>
+        <h4 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Change Password</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', maxWidth: '400px' }}>
+          <div className="form-group">
+            <label className="form-label">Current Password</label>
+            <input type="password" className="form-input" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">New Password</label>
+            <input type="password" className="form-input" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Confirm New Password</label>
+            <input type="password" className="form-input" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+          </div>
+          <button className="btn btn-primary" style={{ marginTop: '0.5rem' }} onClick={handleUpdatePassword} disabled={loading}>
+            {loading ? 'Updating...' : 'Update Password'}
+          </button>
         </div>
-        <div className="form-group">
-          <label className="form-label">New Password</label>
-          <input type="password" className="form-input" />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Confirm New Password</label>
-          <input type="password" className="form-input" />
-        </div>
-        <button className="btn btn-primary" style={{ marginTop: '0.5rem' }} onClick={(e) => { e.preventDefault(); showToast('Action processed successfully!', 'success'); }}>Update Password</button>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const ReceptionSettings = () => {
   const { user } = useAuth();

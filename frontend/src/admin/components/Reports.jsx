@@ -29,8 +29,17 @@ const Reports = () => {
   }, []);
 
   return (
-    <div className="animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+    <div className="animate-fade-in reports-print-container">
+      <style>
+        {`
+          @media print {
+            .no-print { display: none !important; }
+            .reports-print-container { width: 100%; margin: 0; padding: 0; }
+            body { background: white; }
+          }
+        `}
+      </style>
+      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Analytics & Reports</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>Detailed breakdown of fee collections and pending dues.</p>
@@ -41,7 +50,7 @@ const Reports = () => {
             <option>This Month</option>
             <option>This Year</option>
           </select>
-          <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={(e) => { e.preventDefault(); showToast('Action processed successfully!', 'success'); }}>
+          <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={(e) => { e.preventDefault(); window.print(); }}>
             <Download size={16} /> Export PDF
           </button>
         </div>

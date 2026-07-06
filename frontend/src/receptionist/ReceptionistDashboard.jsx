@@ -29,6 +29,7 @@ const ReceptionistDashboard = () => {
   const [selectedFeeStudent, setSelectedFeeStudent] = useState(null);
   const [selectedLeadForAdmission, setSelectedLeadForAdmission] = useState(null);
   const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
 
   const [leads, setLeads] = useState([]);
   const [courses, setCourses] = useState([]);
@@ -169,14 +170,15 @@ const ReceptionistDashboard = () => {
             <StudentProfile student={selectedStudentProfile} onBack={() => setSelectedStudentProfile(null)} /> :
             <StudentsList
               onViewProfile={setSelectedStudentProfile}
+              onEditStudent={handleOpenLead}
               onCollectFee={(student) => { setSelectedFeeStudent(student); setActiveTab('collect-fee'); }}
               onEnrollNew={() => { setSelectedLeadForAdmission(null); setActiveTab('admission-wizard'); }}
             />
         )}
         {activeTab === 'collect-fee' && <CollectFee student={selectedFeeStudent} onPaymentSuccess={(tab) => { if (tab) setActiveTab(tab); else { setActiveTab('students'); setSelectedFeeStudent(null); } }} />}
-        {activeTab === 'receipt' && <ReceiptPage />}
+        {activeTab === 'receipt' && <ReceiptPage transaction={selectedTransaction} onBack={() => { setActiveTab('payment-history'); setSelectedTransaction(null); }} />}
         {activeTab === 'due-list' && <DueList />}
-        {activeTab === 'payment-history' && <PaymentHistory />}
+        {activeTab === 'payment-history' && <PaymentHistory onViewReceipt={(txn) => { setSelectedTransaction(txn); setActiveTab('receipt'); }} />}
         {activeTab === 'settings' && <ReceptionSettings />}
         {activeTab === 'admission-wizard' && (
           <AdmissionWizard

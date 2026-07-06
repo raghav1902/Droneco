@@ -93,7 +93,7 @@ const StudentLeads = ({
                     <div style={{ fontWeight: 600 }}>{lead.full_name}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}></div>
                   </td>
-                  <td>{getCourseName(lead.course_id)}</td>
+                  <td>{getCourseName(lead.interested_course_id)}</td>
                   <td>{lead.city || 'N/A'}</td>
                   <td>
                     <span className={`status-badge ${lead.status === 'Enrolled' ? 'status-success' :

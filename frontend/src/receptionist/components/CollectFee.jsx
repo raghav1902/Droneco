@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, DollarSign, CheckCircle } from 'lucide-react';
 import API from '../../api/api.js';
+import { collectFeeSchema, validateForm } from '../../utils/validators.js';
+import { showToast } from '../../utils/toast.js';
 
 const CollectFee = ({ student, onPaymentSuccess }) => {
   const [amount, setAmount] = useState(0);
@@ -59,6 +61,17 @@ const CollectFee = ({ student, onPaymentSuccess }) => {
   const handlePayment = async (e) => {
     e.preventDefault();
     setIsProcessing(true);
+
+    const validation = validateForm(collectFeeSchema, {
+      amount: Number(amount),
+      payment_method: method,
+      remarks: remarks
+    });
+    if (!validation.success) {
+      setIsProcessing(false);
+      const msgs = Object.values(validation.errors).join(', ');
+      return showToast(msgs, 'error');
+    }
 
     try {
       const response = await API.post('/payments', {
