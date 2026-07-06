@@ -141,6 +141,14 @@ erDiagram
         datetime timestamp
     }
 
+    SETTINGS {
+        ObjectId settings_id PK
+        object institute
+        object fee
+        object receipt
+        datetime updated_at
+    }
+
     STAFF ||--o{ LEADS : assigned_to
     COURSES ||--o{ LEADS : selected_by
     LEAD_STATUS ||--o{ LEADS : has_status
@@ -279,6 +287,34 @@ Monitors sensitive operations.
   "action": "String (e.g. LEAD_EXPORT)",
   "details": "String",
   "timestamp": "Date"
+}
+```
+
+### SETTINGS (`settings`)
+Stores global configuration data (Institute details, global fee configuration, receipt configuration). Typically only one document exists.
+
+```json
+{
+  "settings_id": "ObjectId (PK)",
+  "institute": {
+    "name": "String",
+    "logo": "String (Base64)",
+    "address": "String",
+    "contact": "String",
+    "email": "String"
+  },
+  "fee": {
+    "defaultLateFee": "Number",
+    "lateFeeGraceDays": "Number",
+    "admissionFee": "Number"
+  },
+  "receipt": {
+    "prefix": "String",
+    "header": "String",
+    "footerMessage": "String",
+    "showLogo": "Boolean"
+  },
+  "updated_at": "Date"
 }
 ```
 

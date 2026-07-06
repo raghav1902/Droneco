@@ -21,6 +21,7 @@ A comprehensive, full-stack **MERN** (MongoDB, Express, React, Node.js) applicat
   - `express-rate-limit` to prevent brute force and DDoS attacks
   - `express-mongo-sanitize` to prevent NoSQL injection vulnerabilities
   - Strict CORS configuration scoped to the frontend origin.
+  - Zod integrated for robust schema validation at both UI and API levels.
 
 ## 🔑 Key Modules & Features
 
@@ -43,6 +44,7 @@ A comprehensive, full-stack **MERN** (MongoDB, Express, React, Node.js) applicat
 ### 4. Admin Analytics & Reporting
 - **Dashboards:** Real-time metrics tracking Total Collections, Pending Fees, and Lead Conversion Rates.
 - **Charts:** Visual representation of Revenue Trends and Course Popularity using Recharts.
+- **Settings Management:** Globally configure Institute Info (logo/name), Fee defaults (late fees, admission fees), and Receipt prefixes.
 
 ## 🚀 Getting Started
 
