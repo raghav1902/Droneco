@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Phone, MapPin, Calendar, FileText, CreditCard, History, Clock, Bookmark, ArrowLeft, CheckCircle, Edit, Download, GraduationCap, Briefcase } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, FileText, CreditCard, History, Clock, Bookmark, ArrowLeft, CheckCircle, Edit, Download, GraduationCap, Briefcase, Printer } from 'lucide-react';
 import API from '../../../api/api';
 import { showToast } from '../../../utils/toast';
+import StudentIdCard from './StudentIdCard';
 
 const StudentProfile = ({ student, onBack, onCollectFee }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [previewDoc, setPreviewDoc] = useState(null);
+  const [showIdCard, setShowIdCard] = useState(false);
 
   const [feeData, setFeeData] = useState(null);
   const [payments, setPayments] = useState([]);
@@ -72,6 +74,9 @@ const StudentProfile = ({ student, onBack, onCollectFee }) => {
         <div className="ml-auto flex gap-3">
           <button className="btn btn-secondary gap-2 border-border shadow-sm" onClick={() => alert('Edit profile functionality coming soon!')}>
             <Edit className="w-4 h-4" /> Edit Profile
+          </button>
+          <button className="btn btn-secondary gap-2 border-border shadow-sm" onClick={() => setShowIdCard(true)}>
+            <Printer className="w-4 h-4" /> Print ID
           </button>
           <button className="btn btn-primary shadow-sm" onClick={() => onCollectFee ? onCollectFee(student) : alert('Fee collection unavailable')}>
             Collect Fee
@@ -362,6 +367,10 @@ const StudentProfile = ({ student, onBack, onCollectFee }) => {
           </div>
         </div>
       </div>
+      
+      {showIdCard && (
+        <StudentIdCard student={student} onClose={() => setShowIdCard(false)} />
+      )}
     </div>
   );
 };
