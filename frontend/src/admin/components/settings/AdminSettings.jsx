@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { showToast } from '../../../utils/toast.js';
 import API from '../../../api/api.js';
 import { changePasswordSchema, settingsSchema, validateForm, createUserSchema, editUserSchema } from '../../../utils/validators.js';
+import { ROLE_OPTIONS } from '../../../utils/roles.js';
 import { AuthContext } from '../../../context/AuthContext.jsx';
 
 import {
@@ -333,6 +334,8 @@ const UserManagement = () => {
   const [showResetModal, setShowResetModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   
   const [formData, setFormData] = useState({ name: '', email: '', roleName: 'Receptionist', password: '', status: 'active' });
   const [resetPassword, setResetPassword] = useState('');
@@ -340,9 +343,12 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await API.get('/users');
+      const res = await API.get(`/users?page=${page}&limit=10`);
       if (res.data.success) {
         setUsers(res.data.data);
+        if (res.data.pagination) {
+          setTotalPages(res.data.pagination.totalPages);
+        }
       }
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to fetch users', 'error');
@@ -353,7 +359,7 @@ const UserManagement = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page]);
 
   const handleOpenCreate = () => {
     setFormData({ name: '', email: '', roleName: 'Receptionist', password: '', status: 'active' });
@@ -374,6 +380,7 @@ const UserManagement = () => {
   };
 
   const [formErrors, setFormErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -387,6 +394,7 @@ const UserManagement = () => {
     }
 
     try {
+      setIsSubmitting(true);
       if (isEditing) {
         const res = await API.put(`/users/${selectedUser.id}`, formData);
         if (res.data.success) {
@@ -404,6 +412,8 @@ const UserManagement = () => {
       }
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to save user', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -483,6 +493,13 @@ const UserManagement = () => {
               ))}
             </tbody>
           </table>
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', padding: '1rem', borderTop: '1px solid var(--border)' }}>
+              <button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Previous</button>
+              <span style={{ display: 'flex', alignItems: 'center' }}>Page {page} of {totalPages}</span>
+              <button className="btn btn-secondary" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Next</button>
+            </div>
+          )}
         </div>
       )}
 
@@ -512,9 +529,9 @@ const UserManagement = () => {
               <div className="form-group">
                 <label className="form-label">Role</label>
                 <select className="form-select" value={formData.roleName} onChange={e => { setFormData({...formData, roleName: e.target.value}); setFormErrors({...formErrors, roleName: null}) }}>
-                  <option value="Admin">Admin</option>
-                  <option value="Receptionist">Receptionist</option>
-                  <option value="Counselor">Counselor</option>
+                  {ROLE_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
                 {formErrors.roleName && <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.2rem' }}>{formErrors.roleName}</span>}
               </div>
@@ -529,8 +546,10 @@ const UserManagement = () => {
                 </div>
               )}
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Save</button>
-                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={isSubmitting}>
+                  {isSubmitting ? 'Saving...' : 'Save'}
+                </button>
+                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowModal(false)} disabled={isSubmitting}>Cancel</button>
               </div>
             </form>
           </div>

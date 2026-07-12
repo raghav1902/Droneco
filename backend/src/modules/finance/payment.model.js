@@ -21,6 +21,16 @@ const paymentSchema = new mongoose.Schema({
     enum: ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Cheque'],
     required: [true, 'Payment method is required']
   },
+  status: {
+    type: String,
+    enum: ['SUCCESS', 'PENDING', 'FAILED', 'REFUNDED'],
+    default: 'SUCCESS'
+  },
+  transaction_id: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   late_fee: {
     type: Number,
     default: 0,
@@ -31,6 +41,10 @@ const paymentSchema = new mongoose.Schema({
     default: 0,
     min: [0, 'Discount applied cannot be negative']
   },
+  payment_date: {
+    type: Date,
+    default: Date.now
+  },
   transaction_date: {
     type: Date,
     default: Date.now
@@ -38,7 +52,8 @@ const paymentSchema = new mongoose.Schema({
   receipt_number: {
     type: String,
     required: [true, 'Receipt number is required'],
-    unique: true
+    unique: true,
+    trim: true
   },
   collected_by: {
     type: mongoose.Schema.Types.ObjectId,
@@ -48,9 +63,19 @@ const paymentSchema = new mongoose.Schema({
     type: String,
     trim: true,
     default: ''
-  }
+  },
+  is_deleted: { type: Boolean, default: false, index: true },
+  deleted_at: { type: Date, default: null }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
+});
+
+// Pre-find hook to filter out soft-deleted documents
+paymentSchema.pre(/^find/, function (next) {
+  if (this.getOptions().includeDeleted !== true) {
+    this.where({ is_deleted: { $ne: true } });
+  }
+  next();
 });
 
 // Add toJSON transform to map _id to id and remove __v

@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
+require('../core/counters.model'); // Ensure Counter model is registered
 
 const StudentSchema = new mongoose.Schema({
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Optional: If student has a login
-  student_id: { type: String, unique: true }, // Internal ID
+  student_id: { type: String, unique: true, sparse: true }, // Internal ID
   enrollment_number: { type: String }, // Auto-generated ID (EN-YYYY-XXXX)
   roll_number: { type: String },
   
@@ -107,8 +108,17 @@ const StudentSchema = new mongoose.Schema({
     enum: ['ACTIVE', 'SUSPENDED', 'ALUMNI', 'DROPOUT']
   },
   
+  is_deleted: { type: Boolean, default: false, index: true },
   deleted_at: { type: Date, default: null }
 }, { timestamps: true });
+
+// Pre-find hook to filter out soft-deleted documents
+StudentSchema.pre(/^find/, function (next) {
+  if (this.getOptions().includeDeleted !== true) {
+    this.where({ is_deleted: { $ne: true } });
+  }
+  next();
+});
 
 // Indexes for fast querying
 StudentSchema.index({ enrollment_number: 1 }, { unique: true, sparse: true });

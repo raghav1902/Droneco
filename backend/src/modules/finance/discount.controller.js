@@ -66,11 +66,16 @@ const updateDiscount = async (req, res) => {
 // @access  Private (Admin)
 const deleteDiscount = async (req, res) => {
   try {
-    const discount = await DiscountRule.findByIdAndDelete(req.params.id);
+    const discount = await DiscountRule.findById(req.params.id);
     if (!discount) {
       return res.status(404).json({ success: false, message: 'Discount not found' });
     }
-    res.status(200).json({ success: true, data: {} });
+    
+    discount.is_deleted = true;
+    discount.deleted_at = new Date();
+    await discount.save();
+
+    res.status(200).json({ success: true, message: 'Discount soft deleted' });
   } catch (error) {
     console.error('Error deleting discount:', error);
     res.status(500).json({ success: false, message: 'Server error deleting discount' });

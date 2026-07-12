@@ -6,8 +6,28 @@ const Role = require('./role.model');
 // @access  Private (Admin)
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find({}).populate('role', 'name').select('-password');
-    res.status(200).json({ success: true, data: users });
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 20;
+    const startIndex = (page - 1) * limit;
+
+    const total = await User.countDocuments();
+    const users = await User.find({})
+      .populate('role', 'name')
+      .select('-password')
+      .skip(startIndex)
+      .limit(limit);
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      },
+      data: users
+    });
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ success: false, message: 'Server error fetching users' });
@@ -56,7 +76,10 @@ const deleteUser = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
     
-    await user.deleteOne();
+    user.is_deleted = true;
+    user.deleted_at = new Date();
+    await user.save();
+    
     res.status(200).json({ success: true, message: 'User removed successfully' });
   } catch (error) {
     console.error('Error deleting user:', error);

@@ -173,10 +173,19 @@ const LeadSchema = new mongoose.Schema({
     default: null 
   },
 
+  is_deleted: { type: Boolean, default: false, index: true },
   deleted_at: { type: Date, default: null },
 
   submitted_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now }
+});
+
+// Pre-find hook to filter out soft-deleted documents
+LeadSchema.pre(/^find/, function (next) {
+  if (this.getOptions().includeDeleted !== true) {
+    this.where({ is_deleted: { $ne: true } });
+  }
+  next();
 });
 
 // Indexes for fast querying

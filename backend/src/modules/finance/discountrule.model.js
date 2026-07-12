@@ -19,9 +19,19 @@ const discountRuleSchema = new mongoose.Schema({
   is_active: {
     type: Boolean,
     default: true
-  }
+  },
+  is_deleted: { type: Boolean, default: false, index: true },
+  deleted_at: { type: Date, default: null }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
+});
+
+// Pre-find hook to filter out soft-deleted documents
+discountRuleSchema.pre(/^find/, function (next) {
+  if (this.getOptions().includeDeleted !== true) {
+    this.where({ is_deleted: { $ne: true } });
+  }
+  next();
 });
 
 discountRuleSchema.set('toJSON', {

@@ -34,9 +34,19 @@ const CourseSchema = new mongoose.Schema({
   fee_structure: {
     total_fee: { type: Number, default: 0 },
     installments_allowed: { type: Boolean, default: false }
-  }
+  },
+  is_deleted: { type: Boolean, default: false, index: true },
+  deleted_at: { type: Date, default: null }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
+});
+
+// Pre-find hook to filter out soft-deleted documents
+CourseSchema.pre(/^find/, function (next) {
+  if (this.getOptions().includeDeleted !== true) {
+    this.where({ is_deleted: { $ne: true } });
+  }
+  next();
 });
 
 CourseSchema.set('toJSON', {
