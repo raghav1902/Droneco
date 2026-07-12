@@ -345,7 +345,7 @@ const UserManagement = () => {
       setLoading(true);
       const res = await API.get(`/users?page=${page}&limit=10`);
       if (res.data.success) {
-        setUsers(res.data.data);
+        setUsers(res.data.data.map(u => ({ ...u, id: u._id || u.id })));
         if (res.data.pagination) {
           setTotalPages(res.data.pagination.totalPages);
         }
