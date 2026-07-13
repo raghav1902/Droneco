@@ -57,8 +57,6 @@ const StudentForm = () => {
     full_name: '',
     middle_name: '',
     last_name: '',
-    photo_url: '',
-    signature_url: '',
     gender: '',
     dob: '',
     blood_group: '',

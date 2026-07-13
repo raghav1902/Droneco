@@ -37,13 +37,9 @@ const createLead = async (req, res) => {
       try {
         if (req.body.filler_type !== 'guardian') checkRequired('guardian', req.body.guardian?.first_name, 'Guardian Details');
         checkRequired('address', req.body.permanent_address?.city, 'Permanent Address City');
-        checkRequired('media', req.body.photo_url, 'Photo');
-        checkRequired('media', req.body.signature_url, 'Signature');
         checkRequired('category', req.body.category, 'Category');
         checkRequired('blood_group', req.body.blood_group, 'Blood Group');
         checkRequired('religion', req.body.religion, 'Religion');
-        checkRequired('marital_status', req.body.marital_status, 'Marital Status');
-        checkRequired('identification_marks', req.body.identification_mark_1, 'Identification Mark 1');
         checkRequired('disability', req.body.disability_status, 'Disability Status');
         checkRequired('qualification', req.body.previous_qualification?.school_college_name, 'Previous Qualification (School/College Name)');
         
