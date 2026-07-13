@@ -22,7 +22,7 @@ const createParentSchema = (role) => z.object({
   email: z.string().email("Invalid email").optional().or(z.literal('')),
   occupation: role === 'Father' ? z.string().min(1, "Father's Occupation is required") : z.string().optional(),
   organization: z.string().optional(),
-  annual_income: z.number().optional().or(z.string().regex(/^\d+$/, "Must be numeric").transform(Number).optional()),
+  annual_income: z.union([z.number(), z.string().regex(/^\d+$/, "Must be numeric").transform(Number), z.literal('')]).optional(),
   highest_qualification: z.string().optional()
 });
 
@@ -137,6 +137,8 @@ const updateLeadStatusSchema = z.object({
   status: z.enum(['New', 'Contacted', 'Interested', 'Not Interested', 'Approved', 'Enrolled'], { errorMap: () => ({ message: 'Invalid status' }) })
 });
 
+const updateLeadSchema = z.any(); // Allow admin to flexibly edit lead details without strict schema blockers
+
 const addFeedbackSchema = z.object({
   feedback_text: z.string().min(1, "Feedback text is required"),
   next_follow_up_date: z.string().optional().nullable()
@@ -152,7 +154,7 @@ const courseSchema = z.object({
 
 const discountSchema = z.object({
   name: z.string().min(1, "Discount name is required"),
-  type: z.enum(['percentage', 'fixed']),
+  type: z.enum(['Percentage', 'Flat']),
   value: z.number().positive("Value must be a positive number"),
   max_cap: z.number().optional().nullable(),
   is_active: z.boolean().optional()
@@ -241,6 +243,7 @@ module.exports = {
   authLoginSchema,
   changePasswordSchema,
   createLeadSchema,
+  updateLeadSchema,
   updateLeadStatusSchema,
   addFeedbackSchema,
   courseSchema,

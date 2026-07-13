@@ -11,7 +11,7 @@ const DiscountManagement = () => {
 
   const [formData, setFormData] = useState({
     name: '',
-    type: 'percentage',
+    type: 'Percentage',
     value: 0
   });
 
@@ -83,11 +83,11 @@ const DiscountManagement = () => {
     <div className="animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Discount Management</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>Configure scholarships and promotional discounts.</p>
+          <h2 style={{ fontSize: '1.25rem' }}>Discount Management</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Configure scholarships and promotional discounts.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditingId(null); setFormData({ name: '', type: 'percentage', value: 0 }); setShowModal(true); }}>
-          <Plus size={18} /> Add Discount
+        <button className="btn btn-primary" onClick={() => { setEditingId(null); setFormData({ name: '', type: 'Percentage', value: 0 }); setShowModal(true); }}>
+          + Add Discount
         </button>
       </div>
 
@@ -101,8 +101,8 @@ const DiscountManagement = () => {
                   {discount.is_active ? 'Active' : 'Inactive'}
                 </span>
               </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent-hex)' }}>
-                {discount.type === 'percentage' ? `${discount.value}%` : `₹${discount.value}`}
+              <div style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--accent-hex)' }}>
+                {discount.type === 'Percentage' ? `${discount.value}%` : `₹${discount.value}`}
               </div>
             </div>
 
@@ -137,11 +137,11 @@ const DiscountManagement = () => {
                 <input type="text" className="form-input" placeholder="e.g. Merit Scholarship" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label className="form-label">Type</label>
-                  <select className="form-select" value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
-                    <option value="percentage">Percentage</option>
-                    <option value="fixed">Flat Amount</option>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.7rem' }}>TYPE</label>
+                  <select className="form-select" value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value})}>
+                    <option value="Percentage">Percentage</option>
+                    <option value="Flat">Flat Amount</option>
                   </select>
                 </div>
                 <div>

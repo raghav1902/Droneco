@@ -13,18 +13,36 @@ const StudentsList = ({ onViewProfile, onCollectFee, onEnrollNew, onEditStudent 
   const [printStudent, setPrintStudent] = useState(null);
 
   React.useEffect(() => {
-    const fetchStudents = async () => {
+    const fetchData = async () => {
       try {
-        const res = await API.get('/v2/students');
-        const mappedStudents = res.data.data.map(s => ({
-          ...s,
-          id: s._id,
-          full_name: `${s.personal_info?.first_name || ''} ${s.personal_info?.last_name || ''}`.trim(),
-          email: s.contact_info?.email || 'N/A',
-          mobile_number: s.contact_info?.mobile_number || 'N/A',
-          interested_course_id: { course_name: s.department_id?.name || 'N/A' },
-          status: s.status === 'ACTIVE' ? 'Enrolled' : s.status
-        }));
+        const [studentsRes, feesRes] = await Promise.all([
+          API.get('/v2/students'),
+          API.get('/fees')
+        ]);
+        
+        const fees = feesRes.data?.data || [];
+        
+        const mappedStudents = studentsRes.data.data.map(s => {
+          // Find the fee structure for this student
+          const studentFee = fees.find(f => (f.student_id && (f.student_id._id === s._id || f.student_id === s._id)));
+          let feeStatus = 'N/A';
+          if (studentFee) {
+            if (studentFee.due_amount <= 0) feeStatus = 'Paid';
+            else if (studentFee.due_amount > 0 && studentFee.paid_amount > 0) feeStatus = 'Pending';
+            else feeStatus = 'Pending'; // Or 'Overdue' if you have logic for it
+          }
+
+          return {
+            ...s,
+            id: s._id,
+            full_name: `${s.personal_info?.first_name || ''} ${s.personal_info?.last_name || ''}`.trim(),
+            email: s.contact_info?.email || 'N/A',
+            mobile_number: s.contact_info?.mobile_number || 'N/A',
+            interested_course_id: { course_name: s.department_id?.name || 'N/A' },
+            status: s.status === 'ACTIVE' ? 'Enrolled' : s.status,
+            fee_status: feeStatus
+          };
+        });
         setStudents(mappedStudents);
       } catch (error) {
         console.error('Failed to fetch students:', error);
@@ -32,7 +50,7 @@ const StudentsList = ({ onViewProfile, onCollectFee, onEnrollNew, onEditStudent 
         setLoading(false);
       }
     };
-    fetchStudents();
+    fetchData();
   }, []);
 
   const toggleMenu = (id) => {
@@ -136,8 +154,7 @@ const StudentsList = ({ onViewProfile, onCollectFee, onEnrollNew, onEditStudent 
                   </span>
                 </td>
                 <td className="py-4 px-6">
-                  {/* Fee status is now on the Fee model, we'll need to fetch that separately or show N/A for now */}
-                  <span className="text-muted-foreground text-xs">Verify in Collect Fee</span>
+                  {getFeeBadge(student.fee_status)}
                 </td>
                 <td className="py-4 px-6 text-right relative">
                   <button

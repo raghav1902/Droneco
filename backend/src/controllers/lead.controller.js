@@ -262,8 +262,54 @@ const addLeadFeedback = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error adding lead feedback:', error);
-    res.status(500).json({ success: false, message: 'Server error adding lead feedback' });
+    console.error('Add Feedback Error:', error);
+    res.status(500).json({ success: false, message: 'Server error adding feedback' });
+  }
+};
+
+// @desc    Update lead details (Admin/Receptionist edit)
+// @route   PUT /api/admin/leads/:id or /api/receptionist/leads/:id
+// @access  Private
+const updateLead = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find lead
+    const lead = await Lead.findById(id);
+    if (!lead) {
+      return res.status(404).json({ success: false, message: 'Lead not found' });
+    }
+
+    // Assign new fields
+    const updateData = req.body;
+    
+    // Merge nested objects properly if needed, but since Mongoose supports deep partial updates via Object.assign if handled carefully,
+    // or we can just iterate and set properties.
+    for (const key in updateData) {
+      // Prevent updating system fields
+      if (['status', 'assigned_to_staff_id', 'is_deleted', 'deleted_at', 'submitted_at'].includes(key)) {
+        continue;
+      }
+      
+      if (typeof updateData[key] === 'object' && updateData[key] !== null && !Array.isArray(updateData[key])) {
+        // Deep merge for nested objects like permanent_address, father, etc.
+        lead[key] = { ...lead[key], ...updateData[key] };
+      } else {
+        lead[key] = updateData[key];
+      }
+    }
+
+    lead.updated_at = new Date();
+    const updatedLead = await lead.save();
+
+    res.json({
+      success: true,
+      message: 'Lead updated successfully',
+      data: updatedLead
+    });
+  } catch (error) {
+    console.error('Update Lead Error:', error);
+    res.status(500).json({ success: false, message: 'Server error updating lead' });
   }
 };
 
@@ -296,5 +342,6 @@ module.exports = {
   getLeads,
   updateLeadStatus,
   addLeadFeedback,
-  getLeadFeedbackHistory
+  getLeadFeedbackHistory,
+  updateLead
 };

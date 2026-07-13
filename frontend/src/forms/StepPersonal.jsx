@@ -3,7 +3,7 @@ import CustomFieldsRenderer from './CustomFieldsRenderer';
 
 const StepPersonal = ({ formData, handleBasicChange, prevStep, nextStep, formConfig }) => {
   return (
-    <div className="animate-fade-in">
+    <div className="animate-slide-up-fade">
       <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '2.25rem', letterSpacing: '-0.010em' }}>
         Personal & Communication Information
       </h2>

@@ -482,6 +482,7 @@ const AdminDashboard = () => {
           user={user}
           handleAdmitStudent={handleAdmitStudent}
           admittingLeadId={admittingLeadId}
+          fetchLeads={fetchLeads}
         />
 
         {/* NEW TABS FOR FEE MANAGEMENT */}

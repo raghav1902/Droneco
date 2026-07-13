@@ -11,7 +11,7 @@ const StepCourse = ({
   formConfig
 }) => {
   return (
-    <div className="animate-fade-in">
+    <div className="animate-slide-up-fade">
       <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '2.25rem', letterSpacing: '-0.010em' }}>
         Course Details
       </h2>
@@ -91,66 +91,7 @@ const StepCourse = ({
         </div>
       </div>
 
-      <div className='form-grid-2'>
-        <div className="form-group">
-          <label className="form-label">Semester *</label>
-          <select
-            name="semester"
-            className="form-select"
-            value={formData.semester}
-            onChange={handleBasicChange}
-          >
-            <option value="">Select Semester</option>
-            <option value="1">Semester 1</option>
-            <option value="2">Semester 2</option>
-            <option value="3">Semester 3</option>
-            <option value="4">Semester 4</option>
-            <option value="5">Semester 5</option>
-            <option value="6">Semester 6</option>
-            <option value="7">Semester 7</option>
-            <option value="8">Semester 8</option>
-            <option value="Annual">Annual</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Section <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
-          <input
-            type="text"
-            name="section"
-            className="form-input"
-            placeholder="Section"
-            value={formData.section}
-            onChange={handleBasicChange}
-          />
-        </div>
-      </div>
 
-      <div className='form-grid-2'>
-        <div className="form-group">
-          <label className="form-label">Enrollment Number <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
-          <input
-            type="text"
-            name="enrollment_number"
-            className="form-input"
-            placeholder="Auto Generated"
-            value={formData.enrollment_number || ''}
-            disabled
-            style={{ background: 'var(--bg-inset)', cursor: 'not-allowed' }}
-          />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Roll Number <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
-          <input
-            type="text"
-            name="roll_number"
-            className="form-input"
-            placeholder="Auto Generated after approval"
-            value={formData.roll_number || ''}
-            disabled
-            style={{ background: 'var(--bg-inset)', cursor: 'not-allowed' }}
-          />
-        </div>
-      </div>
 
       <CustomFieldsRenderer
         stepName="Course"

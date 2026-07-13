@@ -272,7 +272,7 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
         return (
           <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="p-2">
             <h3 className="text-xl font-semibold mb-6 text-foreground">Verify Lead Information</h3>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="form-group mb-0">
                 <label className="form-label">Student Name</label>
                 <input type="text" className="form-input bg-muted" name="studentName" value={formData.studentName} onChange={handleChange} />
@@ -300,7 +300,7 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
                 <label className="form-label">Mother's Name</label>
                 <input type="text" className="form-input" name="motherName" value={formData.motherName} onChange={handleChange} />
               </div>
-              <div className="form-group mb-0 col-span-2">
+              <div className="form-group mb-0 md:col-span-2">
                 <label className="form-label">Address / City</label>
                 <textarea className="form-textarea w-full p-3 border border-border rounded-md bg-surface text-foreground" rows="2" name="address" value={formData.address} onChange={handleChange}></textarea>
               </div>
@@ -311,13 +311,13 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
         return (
           <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="p-2">
             <h3 className="text-xl font-semibold mb-6 text-foreground">Student Details</h3>
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="form-group mb-0">
-                <label className="form-label">Date of Birth</label>
+                <label className="form-label">Date of Birth <span style={{ color: 'var(--error, #ef4444)' }}>*</span></label>
                 <input type="date" className="form-input" name="dob" value={formData.dob} onChange={handleChange} />
               </div>
               <div className="form-group mb-0">
-                <label className="form-label">Gender</label>
+                <label className="form-label">Gender <span style={{ color: 'var(--error, #ef4444)' }}>*</span></label>
                 <select className="form-select" name="gender" value={formData.gender} onChange={handleChange}>
                   <option value="">Select</option>
                   <option value="Male">Male</option>
@@ -326,7 +326,7 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
                 </select>
               </div>
               <div className="form-group mb-0">
-                <label className="form-label">Blood Group</label>
+                <label className="form-label">Blood Group <span style={{ color: 'var(--error, #ef4444)' }}>*</span></label>
                 <select className="form-select" name="bloodGroup" value={formData.bloodGroup} onChange={handleChange}>
                   <option value="">Select</option>
                   <option value="A+">A+</option><option value="A-">A-</option>
@@ -336,7 +336,7 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
                 </select>
               </div>
               <div className="form-group mb-0">
-                <label className="form-label">Emergency Contact</label>
+                <label className="form-label">Emergency Contact <span style={{ color: 'var(--error, #ef4444)' }}>*</span></label>
                 <input type="text" className="form-input" name="emergencyContact" value={formData.emergencyContact} onChange={handleChange} />
               </div>
               <div className="form-group mb-0">
@@ -352,7 +352,7 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
                 <input type="date" className="form-input" name="joiningDate" value={formData.joiningDate} onChange={handleChange} />
               </div>
               <div className="form-group mb-0">
-                <label className="form-label">Batch Assigned</label>
+                <label className="form-label">Batch Assigned <span style={{ color: 'var(--error, #ef4444)' }}>*</span></label>
                 <select className="form-select" name="batch" value={formData.batch} onChange={handleChange}>
                   <option value="">Select Batch</option>
                   <option value="Morning">Morning (9 AM - 12 PM)</option>
@@ -364,7 +364,7 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
                 <label className="form-label">Section</label>
                 <input type="text" className="form-input" name="section" value={formData.section} onChange={handleChange} placeholder="e.g. A" />
               </div>
-              <div className="form-group mb-0 col-span-3">
+              <div className="form-group mb-0 md:col-span-2 lg:col-span-3">
                 <label className="form-label">Remarks / Special Notes</label>
                 <textarea className="form-textarea w-full p-3 border border-border rounded-md bg-surface text-foreground" rows="2" name="remarks" value={formData.remarks} onChange={handleChange}></textarea>
               </div>
@@ -373,7 +373,7 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
             {questions && questions.length > 0 && (
               <div className="mt-8 pt-6 border-t border-border">
                 <h4 className="text-lg font-semibold mb-4 text-foreground">Additional Qualifying Details</h4>
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {questions.map(q => (
                     <div key={q.id} className="form-group mb-0">
                       <label className="form-label">{q.question_text} {q.is_required && '*'}</label>
@@ -434,7 +434,7 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
         return (
           <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="p-2">
             <h3 className="text-xl font-semibold mb-6 text-foreground">Upload Documents</h3>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {docs.map(doc => (
                 <div key={doc.key} className="border border-border border-dashed rounded-lg p-6 bg-surface flex flex-col items-center justify-center relative hover:border-primary transition-colors group">
                   {!formData[doc.key] ? (
@@ -506,8 +506,8 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
         return (
           <motion.div key="step5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="p-2">
             <h3 className="text-xl font-semibold mb-6 text-foreground">Fee Confirmation</h3>
-            <div className="grid grid-cols-5 gap-8">
-              <div className="col-span-3">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+              <div className="lg:col-span-3">
                 <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden mb-6">
                   <div className="bg-muted px-6 py-4 border-b border-border flex justify-between items-center">
                     <h4 className="font-semibold text-foreground">Invoice Summary</h4>
@@ -551,14 +551,14 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
                   </div>
                 </div>
               </div>
-              <div className="col-span-2">
+              <div className="lg:col-span-2">
                 <div className="bg-card border border-border rounded-lg shadow-sm p-6 mb-6">
                   <h4 className="font-semibold text-foreground mb-4">Payment Collection</h4>
                   <div className="form-group">
                     <label className="form-label">Amount to Collect Today <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">₹</span>
-                      <input type="number" className="form-input text-lg font-semibold" style={{ paddingLeft: '2rem' }} value={formData.amountCollected} onChange={(e) => setFormData({ ...formData, amountCollected: e.target.value })} placeholder="0.00" />
+                      <input type="number" className="form-input text-lg font-semibold pl-icon" value={formData.amountCollected} onChange={(e) => setFormData({ ...formData, amountCollected: e.target.value })} placeholder="0.00" />
                     </div>
                   </div>
                   <div className="form-group mb-0">

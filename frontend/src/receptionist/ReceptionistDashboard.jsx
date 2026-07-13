@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Zap, LayoutDashboard, Search, Clock, History, Settings, X, Save, Menu, LogOut, Users, UserPlus, CreditCard } from 'lucide-react';
+import { Zap, LayoutDashboard, Search, Clock, History, Settings, X, Edit2, Save, Menu, LogOut, Users, UserPlus, CreditCard } from 'lucide-react';
 import API from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import ReceptionDashboard from './components/ReceptionDashboard';
@@ -19,6 +19,7 @@ import AdmissionWizard from './components/admissions/AdmissionWizard';
 import StudentsList from './components/students/StudentsList';
 import StudentProfile from './components/students/StudentProfile';
 import AppLayout from '../layouts/AppLayout';
+import EditLeadModal from '../admin/components/EditLeadModal';
 
 const ReceptionistDashboard = () => {
   const { user, logout } = useAuth();
@@ -44,6 +45,7 @@ const ReceptionistDashboard = () => {
 
   // Active Lead (for Modal)
   const [selectedLead, setSelectedLead] = useState(null);
+  const [isEditingLead, setIsEditingLead] = useState(false);
   const [feedbackHistory, setFeedbackHistory] = useState([]);
   const [newFeedbackText, setNewFeedbackText] = useState('');
   const [nextFollowUpDate, setNextFollowUpDate] = useState('');
@@ -177,7 +179,7 @@ const ReceptionistDashboard = () => {
         )}
         {activeTab === 'collect-fee' && <CollectFee student={selectedFeeStudent} onPaymentSuccess={(tab) => { if (tab) setActiveTab(tab); else { setActiveTab('students'); setSelectedFeeStudent(null); } }} />}
         {activeTab === 'receipt' && <ReceiptPage transaction={selectedTransaction} onBack={() => { setActiveTab('payment-history'); setSelectedTransaction(null); }} />}
-        {activeTab === 'due-list' && <DueList />}
+        {activeTab === 'due-list' && <DueList onCollectFee={(student) => { setSelectedFeeStudent(student); setActiveTab('collect-fee'); }} />}
         {activeTab === 'payment-history' && <PaymentHistory onViewReceipt={(txn) => { setSelectedTransaction(txn); setActiveTab('receipt'); }} />}
         {activeTab === 'settings' && <ReceptionSettings />}
         {activeTab === 'admission-wizard' && (
@@ -190,8 +192,21 @@ const ReceptionistDashboard = () => {
           />
         )}
       </div>
+      {/* EDIT LEAD MODAL */}
+      {isEditingLead && selectedLead && (
+        <EditLeadModal
+          lead={selectedLead}
+          onClose={() => setIsEditingLead(false)}
+          onUpdate={(updatedLead) => {
+            setSelectedLead(updatedLead);
+            setIsEditingLead(false);
+            fetchData();
+          }}
+        />
+      )}
+
       {/* LEAD DETAIL MODAL */}
-      {selectedLead && (
+      {!isEditingLead && selectedLead && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(15, 23, 42, 0.3)', display: 'flex', alignItems: 'center',
@@ -201,12 +216,16 @@ const ReceptionistDashboard = () => {
             maxWidth: '850px', width: '100%', maxHeight: '90vh',
             overflowY: 'auto', padding: '2.5rem', position: 'relative', background: 'var(--bg-surface)'
           }}>
-            <button style={{
-              position: 'absolute', top: '1.5rem', right: '1.5rem',
-              background: 'none', border: 'none', fontSize: '1.25rem', color: 'var(--text-muted)', cursor: 'pointer'
-            }} onClick={handleCloseModal}>
-              <X size={24} />
-            </button>
+            <div style={{ display: 'flex', position: 'absolute', top: '1.5rem', right: '1.5rem', gap: '0.5rem' }}>
+              <button style={{ background: 'none', border: '1px solid var(--border-color)', cursor: 'pointer', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', borderRadius: '4px' }} onClick={() => setIsEditingLead(true)}>
+                <Edit2 size={16} /> <span style={{ fontSize: '0.8rem' }}>Edit</span>
+              </button>
+              <button style={{
+                background: 'none', border: 'none', fontSize: '1.25rem', color: 'var(--text-muted)', cursor: 'pointer'
+              }} onClick={handleCloseModal}>
+                <X size={24} />
+              </button>
+            </div>
 
             <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1.25rem', marginBottom: '2rem' }}>
               <span className={`badge badge-${selectedLead.status?.toLowerCase().replace(' ', '-')}`} style={{ marginBottom: '0.5rem' }}>{selectedLead.status}</span>
@@ -230,13 +249,37 @@ const ReceptionistDashboard = () => {
                     <div><label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Course Interest</label><span style={{ color: 'var(--accent-hex)', fontWeight: 600 }}>{getCourseName(selectedLead.interested_course_id)}</span></div>
                   </div>
 
+                  {/* Guardian details if applicable */}
                   {selectedLead.filler_type === 'guardian' && (
                     <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
                       <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '1.25rem', letterSpacing: '0.05em' }}>Guardian Contact Details</h3>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div><label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Guardian Name</label><span>{selectedLead.guardian_name}</span></div>
-                        <div><label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Relationship</label><span>{selectedLead.guardian_relation}</span></div>
-                        <div><label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Guardian Phone</label><span>{selectedLead.guardian_phone}</span></div>
+                        <div><label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Guardian Name</label><span>{selectedLead.guardian_name || `${selectedLead.guardian?.first_name || ''} ${selectedLead.guardian?.last_name || ''}`}</span></div>
+                        <div><label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Relationship</label><span>{selectedLead.guardian_relation || selectedLead.guardian?.relationship || 'N/A'}</span></div>
+                        <div><label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Guardian Phone</label><span>{selectedLead.guardian_phone || selectedLead.guardian?.mobile_number || 'N/A'}</span></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Academic Details */}
+                  {(selectedLead.qualification || selectedLead.previous_qualification?.school_college_name) && (
+                    <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
+                      <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '1.25rem', letterSpacing: '0.05em' }}>Academic Details</h3>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div><label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Previous Qualification</label><span>{selectedLead.qualification || 'N/A'}</span></div>
+                        <div><label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>School/College</label><span>{selectedLead.previous_qualification?.school_college_name || 'N/A'}</span></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Address Details */}
+                  {(selectedLead.permanent_address?.house_no || selectedLead.permanent_address?.city) && (
+                    <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
+                      <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '1.25rem', letterSpacing: '0.05em' }}>Address Details</h3>
+                      <div>
+                        <span>
+                          {[selectedLead.permanent_address?.house_no, selectedLead.permanent_address?.street, selectedLead.permanent_address?.city, selectedLead.permanent_address?.state, selectedLead.permanent_address?.pin_code].filter(Boolean).join(', ')}
+                        </span>
                       </div>
                     </div>
                   )}

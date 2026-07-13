@@ -5,16 +5,16 @@ const StepParentGuardian = ({ formData, handleNestedChange, validationErrors, pr
   const getError = (section, field) => validationErrors[`${section}.${field}`];
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-slide-up-fade">
       <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '2.25rem', letterSpacing: '-0.010em' }}>
         Parent / Guardian Details
       </h2>
 
       {/* FATHER DETAILS */}
-      <div style={{ borderBottom: '1px solid hsl(var(--border))', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
+      <div style={{ backgroundColor: 'var(--bg-tertiary)', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem', border: '1px solid var(--border-color)' }}>
         <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '1.5rem', fontWeight: 600 }}>👨 Father Details</h3>
         
-        <div className='form-grid-3'>
+        <div className='form-grid-2'>
           <div className="form-group">
             <label className="form-label">First Name *</label>
             <input
@@ -24,15 +24,6 @@ const StepParentGuardian = ({ formData, handleNestedChange, validationErrors, pr
               onChange={(e) => handleNestedChange('father', 'first_name', e.target.value)}
             />
             {getError('father', 'first_name') && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{getError('father', 'first_name')}</span>}
-          </div>
-          <div className="form-group">
-            <label className="form-label">Middle Name <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.father.middle_name}
-              onChange={(e) => handleNestedChange('father', 'middle_name', e.target.value)}
-            />
           </div>
           <div className="form-group">
             <label className="form-label">Last Name *</label>
@@ -46,7 +37,16 @@ const StepParentGuardian = ({ formData, handleNestedChange, validationErrors, pr
           </div>
         </div>
 
-        <div className='form-grid-3'>
+        <div className='form-grid-2'>
+          <div className="form-group">
+            <label className="form-label">Middle Name <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
+            <input
+              type="text"
+              className="form-input"
+              value={formData.father.middle_name}
+              onChange={(e) => handleNestedChange('father', 'middle_name', e.target.value)}
+            />
+          </div>
           <div className="form-group">
             <label className="form-label">Mobile Number *</label>
             <input
@@ -57,6 +57,9 @@ const StepParentGuardian = ({ formData, handleNestedChange, validationErrors, pr
             />
             {getError('father', 'mobile_number') && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{getError('father', 'mobile_number')}</span>}
           </div>
+        </div>
+
+        <div className='form-grid-2'>
           <div className="form-group">
             <label className="form-label">Alternate Mobile Number <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
             <input
@@ -137,7 +140,7 @@ const StepParentGuardian = ({ formData, handleNestedChange, validationErrors, pr
       </div>
 
       {/* MOTHER DETAILS */}
-      <div style={{ borderBottom: '1px solid hsl(var(--border))', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
+      <div style={{ backgroundColor: 'var(--bg-tertiary)', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem', border: '1px solid var(--border-color)' }}>
         <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '1.5rem', fontWeight: 600 }}>👩 Mother Details</h3>
         
         <div className='form-grid-3'>
@@ -264,7 +267,7 @@ const StepParentGuardian = ({ formData, handleNestedChange, validationErrors, pr
 
       {/* GUARDIAN DETAILS */}
       {formData.filler_type !== 'guardian' && formConfig?.guardian?.visible !== false && (
-      <div style={{ borderBottom: '1px solid hsl(var(--border))', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
+      <div style={{ backgroundColor: 'var(--bg-tertiary)', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem', border: '1px solid var(--border-color)' }}>
         <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '1.5rem', fontWeight: 600 }}>👨👩👧 Guardian Details {formConfig?.guardian?.required ? '*' : '(If Applicable)'}</h3>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Fill only if living with a guardian or different from parents.</p>
         

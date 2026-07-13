@@ -11,7 +11,7 @@ const CustomFieldsRenderer = ({ stepName, formConfig, formData, handleBasicChang
       <h3 style={{ fontSize: '0.85rem', color: 'var(--accent-hex)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', fontWeight: 600 }}>
         Additional Details
       </h3>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {fieldsForStep.map(field => (
           <div key={field.id} className="form-group" style={field.type === 'textarea' ? { gridColumn: '1 / -1' } : {}}>
             <label className="form-label">{field.label} {field.required ? '*' : ''}</label>
@@ -40,6 +40,7 @@ const CustomFieldsRenderer = ({ stepName, formConfig, formData, handleBasicChang
                 type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
                 name={field.id}
                 className="form-input"
+                style={(field.type === 'text' || !field.type) ? { textTransform: 'capitalize' } : {}}
                 value={formData[field.id] || ''}
                 onChange={handleBasicChange}
               />

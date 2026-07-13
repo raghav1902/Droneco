@@ -3,7 +3,7 @@ import { Check } from 'lucide-react';
 
 const Success = ({ formData, setCurrentStep, setFormData }) => {
   return (
-    <div className="animate-fade-in" style={{ textAlign: 'left' }}>
+    <div className="animate-slide-up-fade" style={{ textAlign: 'left' }}>
       <div style={{
         width: '48px',
         height: '48px',

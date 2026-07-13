@@ -10,7 +10,7 @@ const StepAddress = ({
   formConfig
 }) => {
   return (
-    <div className="animate-fade-in">
+    <div className="animate-slide-up-fade">
       <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '2.25rem', letterSpacing: '-0.010em' }}>
         Address Details
       </h2>
@@ -22,7 +22,7 @@ const StepAddress = ({
           Permanent Address {formConfig?.address?.required ? '*' : ''}
         </h3>
 
-        <div className='form-grid-2'>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="form-group">
             <label className="form-label">House/Flat No. <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
             <input
@@ -43,7 +43,7 @@ const StepAddress = ({
           </div>
         </div>
 
-        <div className='form-grid-3'>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="form-group">
             <label className="form-label">City <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
             <input
@@ -73,7 +73,7 @@ const StepAddress = ({
           </div>
         </div>
 
-        <div className='form-grid-2'>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="form-group">
             <label className="form-label">Country <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
             <input
@@ -120,7 +120,7 @@ const StepAddress = ({
 
         {!formData.current_address.same_as_permanent && (
           <>
-            <div className='form-grid-2'>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="form-group">
                 <label className="form-label">House/Flat No. <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
                 <input
@@ -141,7 +141,7 @@ const StepAddress = ({
               </div>
             </div>
 
-            <div className='form-grid-3'>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="form-group">
                 <label className="form-label">City <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
                 <input
@@ -171,7 +171,7 @@ const StepAddress = ({
               </div>
             </div>
 
-            <div className='form-grid-2'>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="form-group">
                 <label className="form-label">Country <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
                 <input

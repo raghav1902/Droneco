@@ -1,5 +1,6 @@
-import React from 'react';
-import { X } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Edit2 } from 'lucide-react';
+import EditLeadModal from './EditLeadModal';
 
 const LeadDetailModal = ({
   selectedLead,
@@ -9,9 +10,26 @@ const LeadDetailModal = ({
   feedbackHistory,
   user,
   handleAdmitStudent,
-  admittingLeadId
+  admittingLeadId,
+  fetchLeads // Pass this down so we can refresh the list
 }) => {
+  const [isEditing, setIsEditing] = useState(false);
+
   if (!selectedLead) return null;
+
+  if (isEditing) {
+    return (
+      <EditLeadModal
+        lead={selectedLead}
+        onClose={() => setIsEditing(false)}
+        onUpdate={(updatedLead) => {
+          setSelectedLead(updatedLead);
+          setIsEditing(false);
+          if (fetchLeads) fetchLeads();
+        }}
+      />
+    );
+  }
 
   return (
     <div style={{
@@ -23,9 +41,14 @@ const LeadDetailModal = ({
         maxWidth: '600px', width: '100%', maxHeight: '85vh',
         overflowY: 'auto', padding: '2rem', position: 'relative', background: 'var(--bg-surface)'
       }}>
-        <button style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setSelectedLead(null)}>
-          <X size={24} />
-        </button>
+        <div style={{ display: 'flex', position: 'absolute', top: '1.25rem', right: '1.25rem', gap: '0.5rem' }}>
+          <button style={{ background: 'none', border: '1px solid var(--border-color)', cursor: 'pointer', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', borderRadius: '4px' }} onClick={() => setIsEditing(true)}>
+            <Edit2 size={16} /> <span style={{ fontSize: '0.8rem' }}>Edit</span>
+          </button>
+          <button style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setSelectedLead(null)}>
+            <X size={24} />
+          </button>
+        </div>
 
         <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
           <span className={`badge badge-${selectedLead.status.toLowerCase().replace(' ', '-')}`} style={{ marginBottom: '0.5rem' }}>{selectedLead.status}</span>
@@ -47,9 +70,32 @@ const LeadDetailModal = ({
             <div style={{ background: 'var(--bg-tertiary)', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', marginTop: '0.5rem' }}>
               <h4 style={{ fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 600 }}>Guardian Information</h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.85rem' }}>
-                <div><span style={{ color: 'var(--text-muted)' }}>Guardian Name:</span> <span style={{ fontWeight: 500 }}>{selectedLead.guardian_name}</span></div>
-                <div><span style={{ color: 'var(--text-muted)' }}>Relationship:</span> <span style={{ fontWeight: 500 }}>{selectedLead.guardian_relation}</span></div>
-                <div><span style={{ color: 'var(--text-muted)' }}>Guardian Phone:</span> <span style={{ fontWeight: 500 }}>{selectedLead.guardian_phone}</span></div>
+                <div><span style={{ color: 'var(--text-muted)' }}>Guardian Name:</span> <span style={{ fontWeight: 500 }}>{selectedLead.guardian_name || `${selectedLead.guardian?.first_name || ''} ${selectedLead.guardian?.last_name || ''}`}</span></div>
+                <div><span style={{ color: 'var(--text-muted)' }}>Relationship:</span> <span style={{ fontWeight: 500 }}>{selectedLead.guardian_relation || selectedLead.guardian?.relationship || 'N/A'}</span></div>
+                <div><span style={{ color: 'var(--text-muted)' }}>Guardian Phone:</span> <span style={{ fontWeight: 500 }}>{selectedLead.guardian_phone || selectedLead.guardian?.mobile_number || 'N/A'}</span></div>
+              </div>
+            </div>
+          )}
+
+          {/* Academic Details */}
+          {(selectedLead.qualification || selectedLead.previous_qualification?.school_college_name) && (
+            <div style={{ background: 'var(--bg-tertiary)', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', marginTop: '0.5rem' }}>
+              <h4 style={{ fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 600 }}>Academic Details</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.85rem' }}>
+                <div><span style={{ color: 'var(--text-muted)' }}>Previous Qualification:</span> <span style={{ fontWeight: 500 }}>{selectedLead.qualification || 'N/A'}</span></div>
+                <div><span style={{ color: 'var(--text-muted)' }}>School/College:</span> <span style={{ fontWeight: 500 }}>{selectedLead.previous_qualification?.school_college_name || 'N/A'}</span></div>
+              </div>
+            </div>
+          )}
+
+          {/* Address Details */}
+          {(selectedLead.permanent_address?.house_no || selectedLead.permanent_address?.city) && (
+            <div style={{ background: 'var(--bg-tertiary)', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', marginTop: '0.5rem' }}>
+              <h4 style={{ fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 600 }}>Address Details</h4>
+              <div style={{ fontSize: '0.85rem' }}>
+                <span style={{ fontWeight: 500 }}>
+                  {[selectedLead.permanent_address?.house_no, selectedLead.permanent_address?.street, selectedLead.permanent_address?.city, selectedLead.permanent_address?.state, selectedLead.permanent_address?.pin_code].filter(Boolean).join(', ')}
+                </span>
               </div>
             </div>
           )}

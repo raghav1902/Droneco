@@ -160,7 +160,7 @@ const StudentForm = () => {
 
   const toTitleCase = (str) => {
     if (!str) return str;
-    return str.toLowerCase().split(' ').map(word => 
+    return str.toLowerCase().split(' ').map(word =>
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
@@ -216,10 +216,10 @@ const StudentForm = () => {
     const result = validateForm(step1Schema, formData);
     if (!result.success) {
       setValidationErrors(result.errors);
-      return false;
+      return { isValid: false, errors: result.errors };
     }
     setValidationErrors({});
-    return true;
+    return { isValid: true };
   };
 
   // Validate other steps if needed (simplifying for now)
@@ -235,8 +235,70 @@ const StudentForm = () => {
   };
 
   const nextStep = () => {
-    if (currentStep === 1 && !validateStep1()) return;
-    if (currentStep === 8 && !validateStep2Dynamic()) return; // questions step is now 8
+    let missingFields = [];
+
+    if (currentStep === 1) {
+      const step1Validation = validateStep1();
+      if (!step1Validation.isValid) {
+        const errorFields = Object.keys(step1Validation.errors).map(key => {
+          return key.split('.').pop().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        });
+        alert(`Please fill the following required fields to proceed:\n\n- ${errorFields.join('\n- ')}`);
+        return;
+      }
+    }
+
+    if (currentStep === 2) {
+      if (formConfig?.marital_status?.visible !== false && formConfig?.marital_status?.required && !formData.marital_status) missingFields.push("Marital Status");
+      if (formConfig?.identification_marks?.visible !== false && formConfig?.identification_marks?.required && !formData.identification_mark_1) missingFields.push("Identification Mark 1");
+    }
+
+    if (currentStep === 3 && formData.filler_type === 'student') {
+      if (!formData.father?.first_name) missingFields.push("Father's First Name");
+      if (!formData.father?.last_name) missingFields.push("Father's Last Name");
+      if (!formData.father?.mobile_number) missingFields.push("Father's Mobile Number");
+      if (!formData.father?.occupation) missingFields.push("Father's Occupation");
+      if (!formData.mother?.first_name) missingFields.push("Mother's First Name");
+      if (!formData.mother?.last_name) missingFields.push("Mother's Last Name");
+      if (!formData.mother?.mobile_number) missingFields.push("Mother's Mobile Number");
+    }
+
+    if (currentStep === 4) {
+      if (formConfig?.address?.visible !== false && formConfig?.address?.required) {
+        if (!formData.permanent_address?.house_no) missingFields.push("Permanent House No.");
+        if (!formData.permanent_address?.street) missingFields.push("Permanent Street");
+        if (!formData.permanent_address?.city) missingFields.push("Permanent City");
+        if (!formData.permanent_address?.state) missingFields.push("Permanent State");
+        if (!formData.permanent_address?.country) missingFields.push("Permanent Country");
+        if (!formData.permanent_address?.pin_code) missingFields.push("Permanent Pin Code");
+      }
+    }
+
+    if (currentStep === 5) {
+      if (formConfig?.qualification?.visible !== false && formConfig?.qualification?.required) {
+        if (!formData.previous_qualification?.school_college_name) missingFields.push("Previous School/College Name");
+      }
+    }
+
+    if (currentStep === 6) {
+      if (!formData.interested_course_id) missingFields.push("Interested Course");
+      if (!formData.admission_year) missingFields.push("Admission Year");
+      if (!formData.department) missingFields.push("Department");
+      if (!formData.semester) missingFields.push("Semester");
+    }
+
+    if (missingFields.length > 0) {
+      alert(`Please fill the following required fields to proceed:\n\n- ${missingFields.join('\\n- ')}`);
+      return;
+    }
+
+    if (currentStep === 8) {
+      if (!validateStep2Dynamic()) {
+        alert("Please fill all required fields in this step.");
+        return;
+      }
+    }
+
     setCurrentStep(prev => prev + 1);
   };
 
@@ -254,7 +316,10 @@ const StudentForm = () => {
       const finalValidation = validateForm(createLeadSchema, formData);
       if (!finalValidation.success) {
         setValidationErrors(finalValidation.errors);
-        setError('Please fix the errors in the form before submitting.');
+        const errorFields = Object.keys(finalValidation.errors).map(key => {
+          return key.split('.').pop().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        });
+        setError(`Please fix the following missing/invalid fields: ${errorFields.join(', ')}`);
         setSubmitting(false);
         return;
       }
@@ -364,7 +429,7 @@ const StudentForm = () => {
 
       {/* Right Column: Clean Form Container */}
       <div className="form-panel">
-        <div style={{ maxWidth: '480px', width: '100%' }}>
+        <div style={{ maxWidth: '750px', width: '100%' }}>
           {error && (
             <div style={{ background: 'var(--danger-glow)', border: '1px solid rgba(190, 18, 60, 0.15)', color: 'var(--danger)', padding: '1rem', borderRadius: 'var(--radius)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
               {error}

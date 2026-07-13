@@ -9,7 +9,7 @@ const createParentSchema = (role) => z.object({
   email: z.string().email("Invalid email").optional().or(z.literal('')),
   occupation: role === 'Father' ? z.string().min(1, "Father's Occupation is required") : z.string().optional(),
   organization: z.string().optional(),
-  annual_income: z.number().optional().or(z.string().regex(/^\d+$/, "Must be numeric").transform(Number).optional()),
+  annual_income: z.union([z.number(), z.string().regex(/^\d+$/, "Must be numeric").transform(Number), z.literal('')]).optional(),
   highest_qualification: z.string().optional()
 });
 
@@ -196,7 +196,7 @@ export const createQuestionSchema = z.object({
 
 export const discountSchema = z.object({
   name: z.string().min(1, "Discount name is required"),
-  type: z.enum(['percentage', 'fixed']),
+  type: z.enum(['Percentage', 'Flat']),
   value: z.number({ invalid_type_error: "Must be a number" }).positive("Value must be a positive number"),
   max_cap: z.number({ invalid_type_error: "Must be a number" }).optional().nullable(),
   is_active: z.boolean().optional()

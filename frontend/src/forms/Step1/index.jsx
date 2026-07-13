@@ -18,7 +18,7 @@ const Step1 = ({
     <>
       {/* STEP 0: Role Selection */}
       {currentStep === 0 && (
-        <div className="animate-fade-in">
+        <div className="animate-slide-up-fade">
           <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1rem', letterSpacing: '-0.010em' }}>
             Welcome to Droneco
           </h2>
@@ -114,7 +114,7 @@ const Step1 = ({
 
       {/* STEP 1: Basic Details */}
       {currentStep === 1 && (
-        <div className="animate-fade-in">
+        <div className="animate-slide-up-fade">
           <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '2.25rem', letterSpacing: '-0.010em' }}>
             {formData.filler_type === 'guardian' ? 'Guardian & Student Info' : 'Basic Information'}
           </h2>
@@ -137,7 +137,7 @@ const Step1 = ({
                 {validationErrors['guardian.first_name'] && <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>{validationErrors['guardian.first_name']}</span>}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1rem' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="form-group">
                   <label className="form-label">Guardian Mobile *</label>
                   <input
@@ -175,7 +175,7 @@ const Step1 = ({
             </h3>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="form-group">
               <label className="form-label">{formData.filler_type === 'guardian' ? "Student's First Name *" : 'First Name *'}</label>
               <input
@@ -214,7 +214,7 @@ const Step1 = ({
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-group">
               <label className="form-label">Gender <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
               <select
@@ -241,7 +241,7 @@ const Step1 = ({
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {formConfig?.blood_group?.visible !== false && (
               <div className="form-group">
                 <label className="form-label">Blood Group {formConfig?.blood_group?.required ? '*' : ''}</label>
@@ -284,7 +284,7 @@ const Step1 = ({
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="form-group">
               <label className="form-label">Nationality *</label>
               <select
@@ -337,7 +337,7 @@ const Step1 = ({
             {validationErrors.email && <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>{validationErrors.email}</span>}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1rem' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-group">
               <label className="form-label">{formData.filler_type === 'guardian' ? "Student's Mobile (Optional)" : 'Mobile Number *'}</label>
               <input
