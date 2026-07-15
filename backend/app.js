@@ -24,10 +24,9 @@ const app = express();
 app.set('trust proxy', 1); // Trust first proxy (Render load balancer) for rate limiting
 
 // Security Headers
-app.use(helmet());
-// app.use(helmet({
-//   crossOriginResourcePolicy: false, // Allow frontend to load images from /uploads
-// }));
+app.use(helmet({
+  crossOriginResourcePolicy: false, // Allow frontend to load images from /uploads
+}));
 
 // Global Middlewares
 app.use(cors({
@@ -96,8 +95,16 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend/dist', 'index.html'));
+  app.get('*', (req, res, next) => {
+    if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {
+      console.log(`[404 Fallthrough] ${req.originalUrl} not found`);
+      return next(new Error(`Not Found - ${req.originalUrl}`));
+    }
+    try {
+      res.sendFile(path.resolve(__dirname, '../frontend/dist', 'index.html'));
+    } catch (err) {
+      next(err);
+    }
   });
 } else {
   // 404 Route handler for API only in dev
