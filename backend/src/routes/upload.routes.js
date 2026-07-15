@@ -21,10 +21,14 @@ const uploadLimiter = rateLimit({
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'droneco_uploads',
-    allowed_formats: ['jpeg', 'jpg', 'png', 'webp'],
-    transformation: [{ width: 800, height: 800, crop: 'limit' }] // Optional: resize large images
+  params: async (req, file) => {
+    const isPdf = file.mimetype === 'application/pdf';
+    return {
+      folder: 'droneco_uploads',
+      allowed_formats: ['jpeg', 'jpg', 'png', 'webp', 'pdf'],
+      resource_type: isPdf ? 'raw' : 'image',
+      ...(isPdf ? {} : { transformation: [{ width: 800, height: 800, crop: 'limit' }] })
+    };
   }
 });
 
