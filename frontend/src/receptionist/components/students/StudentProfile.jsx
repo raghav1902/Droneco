@@ -66,7 +66,7 @@ const StudentProfile = ({ student, onBack, onCollectFee }) => {
     try {
       // 1. Upload the file to the server
       const uploadRes = await API.post('/upload', formData, {
-        headers: { 'Content-Type': undefined } // Let the browser set it with the correct boundary
+        headers: { 'Content-Type': 'multipart/form-data' } // Let the browser set it with the correct boundary
       });
 
       if (uploadRes.data?.success) {

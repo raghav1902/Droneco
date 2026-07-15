@@ -174,7 +174,7 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
     try {
       setUploadProgress(prev => ({ ...prev, [docType]: 50 }));
       const response = await API.post('/upload', uploadData, {
-        headers: { 'Content-Type': undefined }, // Let Axios/browser set it with the correct boundary
+        headers: { 'Content-Type': 'multipart/form-data' }, // Let Axios/browser set it with the correct boundary
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(prev => ({ ...prev, [docType]: percentCompleted === 100 ? 99 : percentCompleted }));
