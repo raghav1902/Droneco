@@ -1,15 +1,21 @@
 import { z } from 'zod';
 
 const createParentSchema = (role) => z.object({
-  first_name: z.string().min(1, `${role}'s First Name is required`),
+  first_name: role === 'Mother' ? z.string().optional().or(z.literal('')) : z.string().min(1, `${role}'s First Name is required`),
   middle_name: z.string().optional(),
-  last_name: z.string().min(1, `${role}'s Last Name is required`),
-  mobile_number: z.string().regex(/^\d{10}$/, "Mobile number must be exactly 10 digits"),
+  last_name: role === 'Mother' ? z.string().optional().or(z.literal('')) : z.string().min(1, `${role}'s Last Name is required`),
+  mobile_number: role === 'Mother' 
+    ? z.string().regex(/^\d{10}$/, "Mobile number must be exactly 10 digits").optional().or(z.literal('')) 
+    : z.string().regex(/^\d{10}$/, "Mobile number must be exactly 10 digits"),
   alt_mobile_number: z.string().optional(),
   email: z.string().email("Invalid email").optional().or(z.literal('')),
   occupation: role === 'Father' ? z.string().min(1, "Father's Occupation is required") : z.string().optional(),
   organization: z.string().optional(),
-  annual_income: z.union([z.number(), z.string().regex(/^\d+$/, "Must be numeric").transform(Number), z.literal('')]).optional(),
+  annual_income: z.union([
+    z.number(), 
+    z.string().regex(/^\d*$/, "Must be numeric").transform(val => val === '' ? undefined : Number(val)), 
+    z.literal('')
+  ]).optional(),
   highest_qualification: z.string().optional()
 });
 
@@ -141,7 +147,8 @@ export const createLeadSchema = z.object({
   section: z.string().optional(),
   roll_number: z.string().optional(),
   student_id: z.string().optional(),
-  mode_of_admission: z.string().optional()
+  mode_of_admission: z.string().optional(),
+  learningMode: z.enum(['online', 'offline']).optional()
 });
 
 export const step1Schema = z.object({
@@ -150,26 +157,10 @@ export const step1Schema = z.object({
   mobile_number: z.string().optional().or(z.literal('')),
   city: z.string().min(1, "City is required"),
   filler_type: z.enum(['student', 'guardian']),
-  guardian: z.object({
-    first_name: z.string().optional(),
-    relationship: z.string().optional(),
-    mobile_number: z.string().optional().or(z.literal(''))
-  }).optional()
+  guardian: z.any().optional()
 }).superRefine((data, ctx) => {
-  if (data.filler_type === 'guardian') {
-    if (!data.guardian || !data.guardian.first_name) {
-      ctx.addIssue({ path: ['guardian', 'first_name'], message: 'Guardian first name is required', code: z.ZodIssueCode.custom });
-    }
-    if (!data.guardian || !data.guardian.relationship) {
-      ctx.addIssue({ path: ['guardian', 'relationship'], message: 'Relationship is required', code: z.ZodIssueCode.custom });
-    }
-    if (!data.guardian || !data.guardian.mobile_number || !/^\d{10}$/.test(data.guardian.mobile_number)) {
-      ctx.addIssue({ path: ['guardian', 'mobile_number'], message: 'Phone number must be exactly 10 digits', code: z.ZodIssueCode.custom });
-    }
-  } else {
-    if (!data.mobile_number || !/^\d{10}$/.test(data.mobile_number)) {
-      ctx.addIssue({ path: ['mobile_number'], message: 'Phone number must be exactly 10 digits', code: z.ZodIssueCode.custom });
-    }
+  if (!data.mobile_number || !/^\d{10}$/.test(data.mobile_number)) {
+    ctx.addIssue({ path: ['mobile_number'], message: 'Phone number must be exactly 10 digits', code: z.ZodIssueCode.custom });
   }
 });
 
@@ -183,6 +174,8 @@ export const courseSchema = z.object({
   code: z.string().min(1, "Course code is required"),
   description: z.string().optional(),
   duration_months: z.number({ invalid_type_error: "Must be a number" }).positive("Duration must be a positive number"),
+  total_fee: z.number().min(0, "Total fee must be a positive number").optional(),
+  installments_allowed: z.boolean().optional(),
   is_active: z.boolean().optional()
 });
 
@@ -218,13 +211,7 @@ export const admissionSchema = z.object({
 });
 
 export const settingsSchema = z.object({
-  institute: z.object({
-    name: z.string().optional(),
-    logo: z.string().optional(),
-    address: z.string().optional(),
-    contact: z.string().optional(),
-    email: z.string().email("Invalid email format").optional().or(z.literal(''))
-  }).optional(),
+
   fee: z.object({
     defaultLateFee: z.number().min(0).optional(),
     lateFeeGraceDays: z.number().min(0).optional(),

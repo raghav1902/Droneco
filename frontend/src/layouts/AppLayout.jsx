@@ -34,12 +34,16 @@ const AppLayout = ({ role, activeTab, setActiveTab, children }) => {
 
   const adminTabs = [
     { id: 'analytics', label: 'Lead Analytics' },
+    { id: 'daily-operations', label: 'Daily Operations' },
     { id: 'leads', label: 'Student Leads' },
+    { id: 'admission-wizard', label: 'Admission Wizard' },
+    { id: 'students', label: 'Students' },
+    { id: 'collect-fee', label: 'Collect Fee' },
+    { id: 'payment-history', label: 'Payment History' },
+    { id: 'due-list', label: 'Due List' },
     { id: 'courses', label: 'Manage Courses' },
     { id: 'questions', label: 'Questions' },
     { id: 'fee_dashboard', label: 'Fee Dashboard' },
-    { id: 'fee_structure', label: 'Fee Structure' },
-    { id: 'discounts', label: 'Discounts' },
     { id: 'reports', label: 'Reports' },
     { id: 'settings', label: 'Settings' }
   ];

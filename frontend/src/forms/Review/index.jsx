@@ -11,18 +11,9 @@ const Review = ({ formData, courses, questions, prevStep, handleSubmit, submitti
       </h2>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2.5rem' }}>
-        {formData.filler_type === 'guardian' && (
-          <div style={{ borderBottom: '1px solid hsl(var(--border))', paddingBottom: '1rem' }}>
-            <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>Guardian Details</h3>
-            <p style={{ fontSize: '0.95rem', margin: '0.2rem 0' }}><strong style={{ fontWeight: 550 }}>Name:</strong> {formData.guardian_name}</p>
-            <p style={{ fontSize: '0.95rem', margin: '0.2rem 0' }}><strong style={{ fontWeight: 550 }}>Relationship:</strong> {formData.guardian_relation}</p>
-            <p style={{ fontSize: '0.95rem', margin: '0.2rem 0' }}><strong style={{ fontWeight: 550 }}>Mobile:</strong> {formData.guardian_phone}</p>
-          </div>
-        )}
-
         <div style={{ borderBottom: '1px solid hsl(var(--border))', paddingBottom: '1rem' }}>
           <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>
-            {formData.filler_type === 'guardian' ? 'Student Details' : 'Personal Details'}
+            Basic Details
           </h3>
           <p style={{ fontSize: '0.95rem', margin: '0.2rem 0' }}><strong style={{ fontWeight: 550 }}>Student Name:</strong> {formData.full_name}</p>
           <p style={{ fontSize: '0.95rem', margin: '0.2rem 0' }}><strong style={{ fontWeight: 550 }}>Email:</strong> {formData.email || 'N/A'}</p>

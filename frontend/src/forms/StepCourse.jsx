@@ -5,11 +5,13 @@ import CustomFieldsRenderer from './CustomFieldsRenderer';
 const StepCourse = ({
   formData,
   handleBasicChange,
+  validationErrors,
   courses,
   prevStep,
   nextStep,
   formConfig
 }) => {
+  const getError = (field) => validationErrors?.[field];
   return (
     <div className="animate-slide-up-fade">
       <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '2.25rem', letterSpacing: '-0.010em' }}>
@@ -29,67 +31,38 @@ const StepCourse = ({
             <option key={course.id} value={course.id}>{course.course_name}</option>
           ))}
         </select>
+        {getError('interested_course_id') && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{getError('interested_course_id')}</span>}
       </div>
 
       <div className='form-grid-2'>
         <div className="form-group">
           <label className="form-label">Admission Year *</label>
-          <select
-            name="admission_year"
-            className="form-select"
-            value={formData.admission_year}
-            onChange={handleBasicChange}
-          >
-            <option value="">Select Year</option>
-            <option value="2023">2023</option>
-            <option value="2024">2024</option>
-            <option value="2025">2025</option>
-            <option value="2026">2026</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Mode of Admission <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
           <input
             type="text"
-            name="mode_of_admission"
+            name="admission_year"
             className="form-input"
-            placeholder="e.g. Merit, Management"
-            value={formData.mode_of_admission}
-            onChange={handleBasicChange}
+            value={formData.admission_year}
+            readOnly
+            style={{ backgroundColor: 'var(--bg-hover)', cursor: 'not-allowed', color: 'var(--text-secondary)' }}
           />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Learning Mode *</label>
+          <select
+            name="learningMode"
+            className="form-select"
+            value={formData.learningMode || ''}
+            onChange={handleBasicChange}
+          >
+            <option value="">Select Mode</option>
+            <option value="online">Online</option>
+            <option value="offline">Offline</option>
+          </select>
+          {getError('learningMode') && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{getError('learningMode')}</span>}
         </div>
       </div>
 
-      <div className='form-grid-2'>
-        <div className="form-group">
-          <label className="form-label">Department *</label>
-          <select
-            name="department"
-            className="form-select"
-            value={formData.department}
-            onChange={handleBasicChange}
-          >
-            <option value="">Select Department</option>
-            <option value="Science">Science</option>
-            <option value="Commerce">Commerce</option>
-            <option value="Arts">Arts</option>
-            <option value="Engineering">Engineering</option>
-            <option value="Medical">Medical</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Branch <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
-          <input
-            type="text"
-            name="branch"
-            className="form-input"
-            placeholder="Branch"
-            value={formData.branch}
-            onChange={handleBasicChange}
-          />
-        </div>
-      </div>
+
 
 
 

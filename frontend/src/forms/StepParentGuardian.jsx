@@ -145,7 +145,7 @@ const StepParentGuardian = ({ formData, handleNestedChange, validationErrors, pr
         
         <div className='form-grid-3'>
           <div className="form-group">
-            <label className="form-label">First Name *</label>
+            <label className="form-label">First Name <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
             <input
               type="text"
               className="form-input"
@@ -164,7 +164,7 @@ const StepParentGuardian = ({ formData, handleNestedChange, validationErrors, pr
             />
           </div>
           <div className="form-group">
-            <label className="form-label">Last Name *</label>
+            <label className="form-label">Last Name <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
             <input
               type="text"
               className="form-input"
@@ -177,7 +177,7 @@ const StepParentGuardian = ({ formData, handleNestedChange, validationErrors, pr
 
         <div className='form-grid-3'>
           <div className="form-group">
-            <label className="form-label">Mobile Number *</label>
+            <label className="form-label">Mobile Number <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
             <input
               type="tel"
               className="form-input"
@@ -370,7 +370,7 @@ const StepParentGuardian = ({ formData, handleNestedChange, validationErrors, pr
         
         <div className='form-grid-3'>
           <div className="form-group">
-            <label className="form-label">Emergency Contact Person Name *</label>
+            <label className="form-label">Emergency Contact Person Name <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
             <input
               type="text"
               className="form-input"
@@ -380,7 +380,7 @@ const StepParentGuardian = ({ formData, handleNestedChange, validationErrors, pr
             {getError('emergency_contact', 'name') && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{getError('emergency_contact', 'name')}</span>}
           </div>
           <div className="form-group">
-            <label className="form-label">Relationship with Student *</label>
+            <label className="form-label">Relationship with Student <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
             <select
               className="form-select"
               value={formData.emergency_contact.relationship}
@@ -397,7 +397,7 @@ const StepParentGuardian = ({ formData, handleNestedChange, validationErrors, pr
             {getError('emergency_contact', 'relationship') && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{getError('emergency_contact', 'relationship')}</span>}
           </div>
           <div className="form-group">
-            <label className="form-label">Emergency Mobile Number *</label>
+            <label className="form-label">Emergency Mobile Number <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
             <input
               type="tel"
               className="form-input"

@@ -21,11 +21,6 @@ const feeSchema = new mongoose.Schema({
     required: [true, 'Total amount is required'],
     min: [0, 'Total amount cannot be negative']
   },
-  discount_amount: {
-    type: Number,
-    default: 0,
-    min: [0, 'Discount amount cannot be negative']
-  },
   tax_amount: {
     type: Number,
     default: 0,
@@ -50,6 +45,10 @@ const feeSchema = new mongoose.Schema({
     type: String,
     enum: ['Pending', 'Partial', 'Paid'],
     default: 'Pending'
+  },
+  is_deleted: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }

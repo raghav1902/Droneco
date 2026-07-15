@@ -87,19 +87,15 @@ const ReceiptPage = ({ transaction, onBack }) => {
             <div className="flex flex-col md:flex-row justify-between items-start gap-6">
               <div className="flex gap-4">
                 <div className="w-20 h-20 bg-[#004f45]/5 rounded-lg flex items-center justify-center p-1 overflow-hidden">
-                  {settings?.institute?.logo ? (
-                    <img alt="Institute Logo" className="w-full h-full object-contain" src={settings.institute.logo}/>
-                  ) : (
-                    <img alt="Droneco Institute Logo" className="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFDb1xFF7NV_NRKwWP__KQdUiCxKjOABgCpRNVScs2a7BUk_ffdJfXflRBpe9fpvfEiNasw27oJ3vlRpClAXhZiYAxR6hvxhKFdlITVdz7sEy9vbn0itedTnWL5bhljcHoiHe8oLqn-dgwVcptGZbIRQHt5Fo-Afbtlh2wEi07_IYcKDTUtfU8hnmh33WrBXQQSROvnyuZ1fiKwDwN4n6mOy4fY35DQ_-dlDkYWcVKSJ70rWOGiF3NWH1I1VjW9P7u65o"/>
-                  )}
+                  <img alt="Droneco Institute Logo" className="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFDb1xFF7NV_NRKwWP__KQdUiCxKjOABgCpRNVScs2a7BUk_ffdJfXflRBpe9fpvfEiNasw27oJ3vlRpClAXhZiYAxR6hvxhKFdlITVdz7sEy9vbn0itedTnWL5bhljcHoiHe8oLqn-dgwVcptGZbIRQHt5Fo-Afbtlh2wEi07_IYcKDTUtfU8hnmh33WrBXQQSROvnyuZ1fiKwDwN4n6mOy4fY35DQ_-dlDkYWcVKSJ70rWOGiF3NWH1I1VjW9P7u65o"/>
                 </div>
                 <div className="space-y-1">
                   <h2 className="text-[32px] font-black text-[#004f45] tracking-tighter uppercase leading-none">
-                    {settings?.institute?.name || 'Droneco'}
+                    Droneco
                   </h2>
                   <p className="text-[14px] text-[#3e4946] leading-relaxed max-w-xs whitespace-pre-line">
-                    {settings?.institute?.address ? settings.institute.address + '\n' : '123 Education Lane, Tech District\n'}
-                    {settings?.institute?.email || 'contact@institute.edu'} | {settings?.institute?.contact || '+1 234-567-8900'}
+                    123 Education Lane, Tech District{'\n'}
+                    contact@institute.edu | +1 234-567-8900
                   </p>
                 </div>
               </div>
@@ -184,9 +180,7 @@ const ReceiptPage = ({ transaction, onBack }) => {
 
           {/* Document Footer Decorative Area */}
           <div className="bg-[#e0e3e1] px-6 py-4 mt-12 text-center">
-            <p className="text-[14px] text-[#3e4946] font-medium">
-              © {new Date().getFullYear()} {settings?.institute?.name || 'Droneco Institute Technical Academy'}. All Rights Reserved.
-            </p>
+              © {new Date().getFullYear()} Droneco Institute Technical Academy. All Rights Reserved.
             <p className="font-bold uppercase tracking-widest text-[10px] text-[#3e4946] opacity-60 mt-1">Computer Generated Receipt - No Signature Required</p>
           </div>
         </div>
@@ -195,7 +189,7 @@ const ReceiptPage = ({ transaction, onBack }) => {
       {/* Support Footer (Web Only) */}
       <footer className="mt-auto w-full max-w-4xl px-4 py-6 no-print">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-t border-[#bec9c5]/20 pt-6">
-          <p className="font-bold uppercase tracking-widest text-[12px] text-[#3e4946]">{settings?.institute?.name || 'Droneco Technical Academy'}</p>
+          <p className="font-bold uppercase tracking-widest text-[12px] text-[#3e4946]">Droneco Technical Academy</p>
           <div className="flex gap-6">
             <a className="text-[14px] text-[#4c616c] hover:text-[#004f45] transition-colors" href="#">Terms</a>
             <a className="text-[14px] text-[#4c616c] hover:text-[#004f45] transition-colors" href="#">Privacy</a>

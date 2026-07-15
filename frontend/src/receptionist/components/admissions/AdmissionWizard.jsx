@@ -61,24 +61,7 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
   const submitLock = React.useRef(false);
   const [uploadProgress, setUploadProgress] = useState({});
 
-  const [discountRules, setDiscountRules] = useState([]);
-  const [selectedDiscountId, setSelectedDiscountId] = useState('');
   const [showIdCard, setShowIdCard] = useState(false);
-
-  useEffect(() => {
-    const fetchDiscounts = async () => {
-      try {
-        const res = await API.get('/discounts');
-        if (res.data.success) {
-          setDiscountRules(res.data.data.filter(d => d.is_active));
-        }
-      } catch (err) {
-        console.error('Failed to fetch discounts:', err);
-      }
-    };
-    fetchDiscounts();
-  }, []);
-
   const toTitleCase = (str) => {
     if (!str || typeof str !== 'string') return str;
     return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
@@ -115,19 +98,14 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
   
   const admissionFee = 2500;
   const courseFee = selectedCourseObj?.fee_structure?.total_fee || 45000;
-  
-  const selectedDiscountRule = discountRules.find(d => d.id === selectedDiscountId || d._id === selectedDiscountId);
-  let discountAmount = 0;
-  if (selectedDiscountRule) {
-    if (selectedDiscountRule.type === 'Percentage') {
-      discountAmount = (courseFee * selectedDiscountRule.value) / 100;
-    } else {
-      discountAmount = selectedDiscountRule.value;
-    }
-  }
+  const tax = courseFee * 0.18;
+  const totalPayable = admissionFee + courseFee + tax;
 
-  const tax = (courseFee - discountAmount) * 0.18;
-  const totalPayable = admissionFee + courseFee - discountAmount + tax;
+  useEffect(() => {
+    if (totalPayable > 0 && formData.amountCollected === '') {
+      setFormData(prev => ({ ...prev, amountCollected: totalPayable * 0.5 }));
+    }
+  }, [totalPayable]);
 
   const handleNextStep = () => {
     if (currentStep === 1) {
@@ -166,13 +144,17 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
     }));
   };
 
-  const handleGenerateId = () => {
-    const prefix = 'DRN';
-    const year = new Date().getFullYear();
-    const random = Math.floor(1000 + Math.random() * 9000);
-    setStudentId(`${prefix}${year}${random}`);
-    setAdmissionNo(`ADM-${year}-${random}`);
-    setAdmissionNo(`ADM-${year}-${random}`);
+  const handleGenerateId = async () => {
+    try {
+      const response = await API.get('/v2/students/next-id');
+      if (response.data.success) {
+        setStudentId(response.data.data.student_id);
+        setAdmissionNo(response.data.data.enrollment_number);
+      }
+    } catch (err) {
+      console.error('Failed to fetch next ID:', err);
+      showToast('Failed to generate identity.', 'error');
+    }
   };
 
   const getCourseName = (id) => {
@@ -180,26 +162,42 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
     return course ? course.course_name : 'Selected Course';
   };
 
-  const handleFileUpload = (e, docType) => {
+  const handleFileUpload = async (e, docType) => {
     const file = e.target.files[0];
-    if (file) {
-      // Mock upload progress
-      setUploadProgress(prev => ({ ...prev, [docType]: 10 }));
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          const current = prev[docType] || 10;
-          if (current >= 100) {
-            clearInterval(interval);
-            setFormData(prevData => ({
-              ...prevData,
-              [docType]: { name: file.name, size: (file.size / 1024).toFixed(1) + ' KB', type: file.type }
-            }));
-            setTimeout(() => setUploadProgress(p => ({ ...p, [docType]: 0 })), 500);
-            return { ...prev, [docType]: 100 };
+    if (!file) return;
+
+    setUploadProgress(prev => ({ ...prev, [docType]: 10 }));
+    
+    const uploadData = new FormData();
+    uploadData.append('document', file);
+
+    try {
+      setUploadProgress(prev => ({ ...prev, [docType]: 50 }));
+      const response = await API.post('/upload', uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(prev => ({ ...prev, [docType]: percentCompleted === 100 ? 99 : percentCompleted }));
+        }
+      });
+
+      if (response.data.success) {
+        setUploadProgress(prev => ({ ...prev, [docType]: 100 }));
+        setFormData(prevData => ({
+          ...prevData,
+          [docType]: { 
+            name: file.name, 
+            size: (file.size / 1024).toFixed(1) + ' KB', 
+            type: file.type,
+            url: response.data.filePath 
           }
-          return { ...prev, [docType]: current + 20 };
-        });
-      }, 150);
+        }));
+        setTimeout(() => setUploadProgress(p => ({ ...p, [docType]: 0 })), 500);
+      }
+    } catch (err) {
+      console.error('File upload failed:', err);
+      showToast('Failed to upload file. Please try again.', 'error');
+      setUploadProgress(prev => ({ ...prev, [docType]: 0 }));
     }
   };
 
@@ -220,7 +218,6 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
         lead_id: lead.id,
         course_id: String(formData.courseSelected),
         total_amount: admissionFee + courseFee,
-        discount_amount: discountAmount,
         tax_amount: tax
       };
 
@@ -235,7 +232,7 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
 
       // Create Fee Structure
       const feeRes = await API.post('/fees', payload);
-      const feeId = feeRes.data.data.id;
+      const feeId = feeRes.data.data?.id || feeRes.data.data?._id;
 
       // Record Initial Payment if any amount was collected
       const collectedAmount = Number(formData.amountCollected);
@@ -249,10 +246,10 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
       }
 
       // Admit Student: Creates Student, Parent, updates Lead, and links Fee/Payment
-      const admitRes = await API.post(`/v2/students/admit/${lead.id}`, { formData });
+      const admitRes = await API.post(`/v2/students/admit/${lead.id || lead._id}`, { formData });
       if (admitRes.data?.data?.student) {
         const studentObj = admitRes.data.data.student;
-        setStudentId(studentObj.enrollment_number || studentObj.student_id || studentObj.id);
+        setStudentId(studentObj.enrollment_number || studentObj.student_id || studentObj.id || studentObj._id);
       }
 
       // ONLY navigate to Finish step on success, do not reset isSubmitting
@@ -522,24 +519,7 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
                       <span className="text-muted-foreground">Course Fee ({getCourseName(formData.courseSelected)})</span>
                       <span className="font-medium text-foreground">₹{courseFee.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between py-3 border-b border-border/50 items-center">
-                      <span className="text-muted-foreground">Special Discount</span>
-                      <div className="flex items-center gap-4">
-                        <select
-                          className="form-select text-sm py-1 px-2 border-border/50"
-                          value={selectedDiscountId}
-                          onChange={(e) => setSelectedDiscountId(e.target.value)}
-                        >
-                          <option value="">No Discount</option>
-                          {discountRules.map(rule => (
-                            <option key={rule.id || rule._id} value={rule.id || rule._id}>
-                              {rule.name} ({rule.type === 'Percentage' ? `${rule.value}%` : `₹${rule.value}`})
-                            </option>
-                          ))}
-                        </select>
-                        <span className="font-medium text-emerald-600">-₹{discountAmount.toLocaleString()}</span>
-                      </div>
-                    </div>
+
                     <div className="flex justify-between py-3 border-b border-border/50">
                       <span className="text-muted-foreground">GST (18%)</span>
                       <span className="font-medium text-foreground">₹{tax.toLocaleString()}</span>
@@ -555,10 +535,10 @@ const AdmissionWizard = ({ lead, courses, questions = [], onComplete, onCancel }
                 <div className="bg-card border border-border rounded-lg shadow-sm p-6 mb-6">
                   <h4 className="font-semibold text-foreground mb-4">Payment Collection</h4>
                   <div className="form-group">
-                    <label className="form-label">Amount to Collect Today <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
+                    <label className="form-label">Amount to Collect Today</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">₹</span>
-                      <input type="number" className="form-input text-lg font-semibold pl-icon" value={formData.amountCollected} onChange={(e) => setFormData({ ...formData, amountCollected: e.target.value })} placeholder="0.00" />
+                      <input type="number" className="form-input text-lg font-semibold pl-8" value={formData.amountCollected} onChange={(e) => setFormData({ ...formData, amountCollected: e.target.value })} placeholder="0.00" />
                     </div>
                   </div>
                   <div className="form-group mb-0">

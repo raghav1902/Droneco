@@ -331,16 +331,32 @@ const ReceptionistDashboard = () => {
                       <option value="Enrolled">Enrolled</option>
                     </select>
                   </div>
-                  <button
-                    className="btn btn-secondary"
-                    style={{ width: '100%', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--accent-hex)', borderColor: 'var(--accent-hex)' }}
-                    onClick={() => {
-                      handleEnrollLead(selectedLead);
-                      handleCloseModal();
-                    }}
-                  >
-                    <UserPlus size={16} /> Start Admission Wizard
-                  </button>
+                  {updatingStatus !== 'Enrolled' ? (
+                    <button
+                      className="btn btn-secondary"
+                      style={{ width: '100%', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--accent-hex)', borderColor: 'var(--accent-hex)' }}
+                      onClick={() => {
+                        handleEnrollLead(selectedLead);
+                        handleCloseModal();
+                      }}
+                    >
+                      <UserPlus size={16} /> Start Admission Wizard
+                    </button>
+                  ) : (
+                    <div style={{ padding: '1rem', background: 'var(--success-glow)', border: '1px solid var(--success)', borderRadius: 'var(--radius)', marginBottom: '1.5rem', textAlign: 'center', color: 'var(--success)' }}>
+                      <div style={{ fontSize: '0.85rem', marginBottom: '0.75rem' }}>✓ This inquiry is already enrolled.</div>
+                      <button
+                        className="btn btn-primary"
+                        style={{ width: '100%', fontSize: '0.85rem' }}
+                        onClick={() => {
+                          handleCloseModal();
+                          setActiveTab('students');
+                        }}
+                      >
+                        Go to Student Profile
+                      </button>
+                    </div>
+                  )}
 
                   {/* Add Feedback */}
                   <form onSubmit={handleAddFeedback} style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>

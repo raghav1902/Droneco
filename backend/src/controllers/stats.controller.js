@@ -11,14 +11,15 @@ const Course = require('../models/course.model');
 // @access  Private (Admin only)
 const getStats = async (req, res) => {
   try {
-    const totalLeads = await Lead.countDocuments();
-    const enrolledLeads = await Lead.countDocuments({ status: 'Enrolled' });
-    const pendingFollowUps = await Lead.countDocuments({ status: { $in: ['New', 'Contacted'] } });
+    const totalLeads = await Lead.countDocuments({ is_deleted: { $ne: true } });
+    const enrolledLeads = await Lead.countDocuments({ status: 'Enrolled', is_deleted: { $ne: true } });
+    const pendingFollowUps = await Lead.countDocuments({ status: { $in: ['New', 'Contacted'] }, is_deleted: { $ne: true } });
 
     const conversionRate = totalLeads > 0 ? ((enrolledLeads / totalLeads) * 100).toFixed(1) : 0;
 
     // Aggregate leads by status
     const leadsByStatusAgg = await Lead.aggregate([
+      { $match: { is_deleted: { $ne: true } } },
       { $group: { _id: '$status', count: { $sum: 1 } } }
     ]);
 
@@ -31,29 +32,38 @@ const getStats = async (req, res) => {
     });
     const leadsByStatus = Object.keys(statusMap).map(key => ({ name: key, value: statusMap[key] }));
 
-    // Aggregate leads by course
+    // Aggregate leads by course using database-level lookup instead of in-memory maps
     const leadsByCourseAgg = await Lead.aggregate([
-      { $group: { _id: '$interested_course_id', count: { $sum: 1 } } }
+      { $match: { is_deleted: { $ne: true } } },
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'interested_course_id',
+          foreignField: '_id',
+          as: 'courseDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$courseDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $group: {
+          _id: '$courseDetails.course_name',
+          count: { $sum: 1 }
+        }
+      }
     ]);
 
-    const courses = await Course.find();
-    const courseMap = {};
-    courses.forEach(c => courseMap[c._id.toString()] = c.course_name);
-
-    const courseDataMap = {};
-    courses.forEach(c => courseDataMap[c.course_name] = 0);
-
-    leadsByCourseAgg.forEach(item => {
-      const courseId = item._id?.toString();
-      const courseName = courseMap[courseId] || 'Unknown / Deleted';
-      if (courseDataMap[courseName] === undefined) courseDataMap[courseName] = 0;
-      courseDataMap[courseName] += item.count;
-    });
-
-    const leadsByCourse = Object.keys(courseDataMap).map(key => ({ name: key, value: courseDataMap[key] }));
+    const leadsByCourse = leadsByCourseAgg.map(item => ({
+      name: item._id || 'Unknown / Deleted',
+      value: item.count
+    }));
 
     // Get recent leads
-    const recentLeadsRaw = await Lead.find()
+    const recentLeadsRaw = await Lead.find({ is_deleted: { $ne: true } })
       .sort({ submitted_at: -1 })
       .limit(5)
       .populate('interested_course_id', 'course_name');

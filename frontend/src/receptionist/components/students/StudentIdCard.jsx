@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import Barcode from 'react-barcode';
 import { Printer, X } from 'lucide-react';
 import API from '../../../api/api';
 
@@ -15,9 +16,9 @@ const StudentIdCard = ({ student, onClose }) => {
 
   useEffect(() => {
     const fetchCourse = async () => {
-      const courseId = student?.courseSelected || 
-                       (typeof student?.department_id === 'string' ? student.department_id : student?.department_id?._id) ||
-                       (typeof student?.interested_course_id === 'string' ? student.interested_course_id : student?.interested_course_id?._id);
+      const courseId = student?.courseSelected ||
+        (typeof student?.department_id === 'string' ? student.department_id : student?.department_id?._id) ||
+        (typeof student?.interested_course_id === 'string' ? student.interested_course_id : student?.interested_course_id?._id);
 
       if (courseId && courseId.length === 24 && (courseName === 'N/A' || !courseName)) {
         try {
@@ -92,14 +93,43 @@ const StudentIdCard = ({ student, onClose }) => {
   const validTill = new Date(joinDate + 4, 6, 31).getFullYear();
   const answers = student.answers || {};
 
-  const fatherName = student.fatherName || student.parent_info?.father_name || answers['Father Name'] || answers['father_name'] || 'N/A';
-  const motherName = student.motherName || student.parent_info?.mother_name || answers['Mother Name'] || answers['mother_name'] || 'N/A';
+  const getParentName = (parentObj, fallback) => {
+    if (parentObj?.first_name) {
+      return `${parentObj.first_name} ${parentObj.last_name || ''}`.trim();
+    }
+    return fallback;
+  };
+
+  const fatherName = getParentName(student.father, student.fatherName || student.parent_info?.father_name || answers['Father Name'] || answers['father_name'] || 'N/A');
+  const motherName = getParentName(student.mother, student.motherName || student.parent_info?.mother_name || answers['Mother Name'] || answers['mother_name'] || 'N/A');
+
   const bloodGroup = student.bloodGroup || student.personal_info?.blood_group || answers['Blood Group'] || answers['blood_group'] || 'O+';
   const emergencyContact = student.emergencyContact || student.emergency_contact?.mobile_number || answers['Emergency Contact'] || answers['emergency_contact'] || 'N/A';
-  const address = student.address || student.addresses?.current?.city || student.contact_info?.current_address || answers['Address'] || answers['address'] || student.city || 'N/A';
 
-  // Format ID padded
-  const displayId = student.id ? student.id.slice(-6).toUpperCase() : '000000';
+  const getFullAddress = () => {
+    const addr = student.addresses?.permanent || student.addresses?.current || student.permanent_address;
+    if (addr && (addr.city || addr.state)) {
+      return [addr.house_no, addr.street, addr.city, addr.state, addr.pin_code].filter(Boolean).join(', ');
+    }
+    return student.address || student.city || 'N/A';
+  };
+  const address = getFullAddress();
+
+  // Format ID for barcode and display
+  const fallbackId = student.id ? student.id.slice(-6).toUpperCase() : '000000';
+  const realStudentId = student.student_id || student.enrollment_number || `DRN-${joinDate}-${fallbackId}`;
+  // Strip hyphens for the barcode so it scans cleaner
+  const barcodeValue = realStudentId.replace(/-/g, '');
+
+  // Resolve Photo URL securely using relative paths (bypasses CORS via Vite proxy)
+  const getPhotoUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+    // Rely on Vite proxy /api or /uploads pointing to backend
+    return `${cleanUrl}?t=${Date.now()}`;
+  };
+  const photoUrl = getPhotoUrl(student.photo_url || student.media?.photo_url);
 
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex justify-center items-center overflow-y-auto p-4 sm:p-8">
@@ -182,11 +212,14 @@ const StudentIdCard = ({ student, onClose }) => {
                 {/* Student Image Section */}
                 <div className="flex justify-center mb-4 mt-2">
                   <div className="relative">
-                    <div className="w-28 h-28 rounded-full border-[4px] border-[#9e1a22]/10 shadow-lg overflow-hidden bg-white">
-                      {student.photo_url ? (
-                        <img className="w-full h-full object-cover" alt="Student Headshot" src={student.photo_url} />
+                    <div className="w-28 h-28 rounded-full border-[4px] border-[#9e1a22]/10 shadow-lg overflow-hidden bg-white flex items-center justify-center">
+                      {photoUrl ? (
+                        <img className="w-full h-full object-cover" alt="Student Headshot" src={photoUrl} />
                       ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">No Photo</div>
+                        <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-gray-500">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 mb-1"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                          <span className="text-[10px] uppercase font-bold tracking-wider">No Photo</span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -198,7 +231,7 @@ const StudentIdCard = ({ student, onClose }) => {
                     {student.full_name || student.studentName || `${student.personal_info?.first_name || ''} ${student.personal_info?.last_name || ''}`.trim() || 'STUDENT'}
                   </h2>
                   <div className="inline-block px-3 py-0.5 border border-[#9e1a22]/30 bg-[#9e1a22]/5 rounded-full mt-1">
-                    <p className="font-mono text-[11px] text-[#9e1a22] font-bold">ID: DRN-{joinDate}-{displayId}</p>
+                    <p className="font-mono text-[11px] text-[#9e1a22] font-bold">ID: {realStudentId}</p>
                   </div>
                 </div>
 
@@ -241,7 +274,7 @@ const StudentIdCard = ({ student, onClose }) => {
 
               <div className="flex-1 flex flex-col p-6 relative z-10">
                 {/* Header Branding */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <img alt="Droneco Logo" className="w-7 h-7 object-contain rounded" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBw0jj2rH3IHNc7ELhBvJqAoLGHSeMGVt4LwUtvNKhFN0Rwvis_W029eDPLkAiQzVUJHv3B7_zUbMC-atFp6GHm2JYc_qJmRfH54QGvn7mNVyFvC_kIvUiofXyhSKsj_wS188ZoBrJqruvo1UMqaGaF6TUpANsDEUty1E-fzBOhxaqfNvNv-oyuRdXAGXXMgtvN_Iy8j2TPQ1sZgqLd8Q0sII7UR953NMRxVd5HZeY3gWlFOVCbwCkIBFHKxjlI99nTSkk" />
                     <span className="text-[12px] text-[#004f45] font-bold tracking-tight uppercase">DRONECO INSTITUTE</span>
@@ -250,7 +283,7 @@ const StudentIdCard = ({ student, onClose }) => {
                 </div>
 
                 {/* Section 1: Personal Info */}
-                <section className="mb-6">
+                <section className="mb-4">
                   <h3 className="text-[#9e1a22] text-[11px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
                     <span className="w-1.5 h-3 bg-[#9e1a22] rounded-full"></span>
                     Personal Information
@@ -274,7 +307,7 @@ const StudentIdCard = ({ student, onClose }) => {
                 </section>
 
                 {/* Section 2: Residential Address */}
-                <section className="mb-6">
+                <section className="mb-4">
                   <h3 className="text-[#9e1a22] text-[11px] font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
                     <span className="w-1.5 h-3 bg-[#9e1a22] rounded-full"></span>
                     Residential Address
@@ -287,7 +320,7 @@ const StudentIdCard = ({ student, onClose }) => {
                 </section>
 
                 {/* Section 3: Institute Support */}
-                <section className="mb-6">
+                <section className="mb-4">
                   <h3 className="text-[#9e1a22] text-[11px] font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
                     <span className="w-1.5 h-3 bg-[#9e1a22] rounded-full"></span>
                     Institute Support
@@ -304,20 +337,23 @@ const StudentIdCard = ({ student, onClose }) => {
                   </div>
                 </section>
 
-                {/* Barcode/Serial Area */}
-                <div className="mt-auto mb-4">
+                <div className="mt-auto mb-2">
                   <div className="flex items-center justify-between mb-1 px-1">
-                    <span className="text-[10px] text-[#6e7976] font-bold uppercase">Serial: DRN-{joinDate}-{displayId}</span>
+                    <span className="text-[10px] text-[#6e7976] font-bold uppercase">Serial: {realStudentId}</span>
                     <span className="text-[10px] text-[#004f45] uppercase font-bold">Valid: JUNE {validTill}</span>
                   </div>
-                  <div className="bg-white h-12 w-full flex items-center justify-center border border-[#bec9c5]/30 rounded-sm p-2 overflow-hidden">
-                    <QRCodeSVG value={"DRN-" + joinDate + "-" + displayId} size={40} className="mr-4" />
-                    <div className="flex-1 h-full opacity-70 grayscale bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,#000_2px,#000_4px)]"></div>
+                  <div className="bg-white h-[76px] w-full flex items-center justify-between border border-[#bec9c5]/50 rounded-sm p-2 overflow-hidden shadow-inner">
+                    <div className="shrink-0">
+                      <QRCodeSVG value={realStudentId} size={54} level="M" />
+                    </div>
+                    <div className="flex-1 flex justify-end items-center h-full pl-2 border-l border-[#bec9c5]/30 ml-3">
+                      <Barcode value={barcodeValue} height={44} displayValue={false} margin={0} width={2} background="transparent" />
+                    </div>
                   </div>
                 </div>
 
                 {/* Rules & Disclaimer */}
-                <section className="text-[9px] text-[#4c616c] leading-normal space-y-1 opacity-90 mb-4 border-t border-[#bec9c5]/30 pt-4">
+                <section className="text-[9px] text-[#4c616c] leading-normal space-y-1 opacity-90 mb-2 border-t border-[#bec9c5]/30 pt-3">
                   <p><strong className="text-[#181c1b]">Conditions:</strong> This card is non-transferable and remains property of Droneco Institute. Present on demand to authorities.</p>
                   <p className="italic">If found, please return to any postal drop box or nearest Droneco Administrative Office.</p>
                 </section>

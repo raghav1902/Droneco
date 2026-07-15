@@ -1,8 +1,7 @@
 {
-  "dependencies": {
-    "mongodb": "^7.5.0",
-    "multer": "^2.2.0"
-  },
+  "name": "institute-lead-management-root",
+  "version": "1.0.0",
+  "private": true,
   "scripts": {
     "postinstall": "npm --prefix backend install && npm --prefix frontend install",
     "build": "npm --prefix frontend run build",

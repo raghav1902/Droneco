@@ -31,6 +31,11 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ success: false, message: 'User account is deactivated' });
       }
 
+      // Check if user changed password after the token was issued
+      if (user.changedPasswordAfter(decoded.iat)) {
+        return res.status(401).json({ success: false, message: 'User recently changed password! Please log in again.' });
+      }
+
       // Attach user to request
       req.user = {
         id: user._id.toString(),

@@ -13,79 +13,7 @@ import {
 
 // --- Sub-components for each Settings Section ---
 
-const InstituteSettings = ({ settings, setSettings, onSave }) => {
-  const handleLogoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSettings(s => ({ ...s, logo: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
-  return (
-    <div className="animate-fade-in">
-      <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Institute Settings</h3>
-      <div className="glass-card" style={{ padding: '2rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label className="form-label">Institute Name <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
-            <input type="text" className="form-input" value={settings.name || ''} onChange={e => setSettings(s => ({ ...s, name: e.target.value }))} />
-          </div>
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label className="form-label">Logo Upload <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '80px', height: '80px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                {settings.logo ? <img src={settings.logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>No Logo</span>}
-              </div>
-              <label className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                <Upload size={16} /> Choose Image
-                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} />
-              </label>
-            </div>
-          </div>
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label className="form-label">Address <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
-            <textarea className="form-textarea" rows="2" value={settings.address || ''} onChange={e => setSettings(s => ({ ...s, address: e.target.value }))}></textarea>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Contact Number <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
-            <input type="text" className="form-input" value={settings.contact || ''} onChange={e => setSettings(s => ({ ...s, contact: e.target.value }))} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Email <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
-            <input type="email" className="form-input" value={settings.email || ''} onChange={e => setSettings(s => ({ ...s, email: e.target.value }))} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Website <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
-            <input type="url" className="form-input" value={settings.website || ''} onChange={e => setSettings(s => ({ ...s, website: e.target.value }))} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Time Zone <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
-            <select className="form-select" value={settings.timezone || ''} onChange={e => setSettings(s => ({ ...s, timezone: e.target.value }))}>
-              <option value="UTC (GMT+0)">UTC (GMT+0)</option>
-              <option value="EST (GMT-5)">EST (GMT-5)</option>
-              <option value="IST (GMT+5:30)">IST (GMT+5:30)</option>
-            </select>
-          </div>
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label className="form-label">Currency <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
-            <select className="form-select" style={{ maxWidth: '200px' }} value={settings.currency || ''} onChange={e => setSettings(s => ({ ...s, currency: e.target.value }))}>
-              <option value="INR">Indian Rupee (₹)</option>
-              <option value="USD">US Dollar ($)</option>
-              <option value="EUR">Euro (€)</option>
-            </select>
-          </div>
-        </div>
-        <button className="btn btn-primary" style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={() => onSave({ institute: settings })}>
-          <Save size={16} /> Save Changes
-        </button>
-      </div>
-    </div>
-  );
-};
 
 
 
@@ -184,16 +112,9 @@ const FormConfigSettings = ({ settings, setSettings, onSave }) => {
       <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
         <h4 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Standard Fields</h4>
         <div style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
-          <StandardFieldRow label="Guardian Details (Student Form)" fieldKey="guardian" />
-          <StandardFieldRow label="Address Details" fieldKey="address" />
-          <StandardFieldRow label="Photo & Signature" fieldKey="media" />
-          <StandardFieldRow label="Category" fieldKey="category" />
-          <StandardFieldRow label="Blood Group" fieldKey="blood_group" />
-          <StandardFieldRow label="Religion" fieldKey="religion" />
-          <StandardFieldRow label="Marital Status" fieldKey="marital_status" />
-          <StandardFieldRow label="Identification Marks" fieldKey="identification_marks" />
-          <StandardFieldRow label="Disability Details" fieldKey="disability" />
-          <StandardFieldRow label="Previous Qualification" fieldKey="qualification" />
+          <div style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            The basic inquiry form has been streamlined to only require Name, Email, Mobile, City, and DOB. Standard field toggles have been removed as these fields are no longer present in the initial inquiry form.
+          </div>
         </div>
       </div>
 
@@ -595,10 +516,40 @@ const SecuritySettings = () => {
 
 
 
-const AuditLogs = () => (
+const AuditLogs = () => {
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        setLoading(true);
+        const res = await API.get(`/admin/audit-logs?page=${page}&limit=10`);
+        if (res.data.success) {
+          setLogs(res.data.data);
+          if (res.data.pagination) {
+            setTotalPages(res.data.pagination.totalPages);
+          }
+        }
+      } catch (err) {
+        showToast(err.response?.data?.message || 'Failed to fetch logs', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLogs();
+  }, [page]);
+
+  return (
   <div className="animate-fade-in">
     <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Audit Logs</h3>
     <div className="glass-card" style={{ overflowX: 'auto' }}>
+      {loading ? (
+        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading audit logs...</div>
+      ) : (
+        <>
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
         <thead>
           <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-tertiary)' }}>
@@ -610,12 +561,9 @@ const AuditLogs = () => (
           </tr>
         </thead>
         <tbody>
-          {[
-            { id: 1, time: '2026-07-03 10:45 AM', user: 'Admin User', action: 'Login', details: 'Successful login', ip: '192.168.1.1' },
-            { id: 3, time: '2026-07-03 11:20 AM', user: 'Sarah Jenkins', action: 'Collect Fee', details: 'Collected ₹1500 from STU-089', ip: '192.168.1.4' },
-          ].map(log => (
+          {logs.map(log => (
             <tr key={log.id} style={{ borderBottom: '1px solid var(--border)' }} className="table-row-hover">
-              <td style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{log.time}</td>
+              <td style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{new Date(log.time).toLocaleString()}</td>
               <td style={{ padding: '1rem', fontWeight: 500 }}>{log.user}</td>
               <td style={{ padding: '1rem' }}>
                 <span style={{ fontSize: '0.85rem', padding: '0.2rem 0.5rem', background: 'var(--bg-tertiary)', borderRadius: '4px' }}>{log.action}</span>
@@ -624,11 +572,26 @@ const AuditLogs = () => (
               <td style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{log.ip}</td>
             </tr>
           ))}
+          {logs.length === 0 && (
+            <tr>
+              <td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No logs available.</td>
+            </tr>
+          )}
         </tbody>
       </table>
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', padding: '1rem', borderTop: '1px solid var(--border)' }}>
+          <button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Previous</button>
+          <span style={{ display: 'flex', alignItems: 'center' }}>Page {page} of {totalPages}</span>
+          <button className="btn btn-secondary" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Next</button>
+        </div>
+      )}
+      </>
+      )}
     </div>
   </div>
-);
+)};
+
 
 const About = ({ settings, setSettings, onSave }) => (
   <div className="animate-fade-in">
@@ -672,9 +635,8 @@ const About = ({ settings, setSettings, onSave }) => (
 // --- Main AdminSettings Wrapper ---
 
 const AdminSettings = () => {
-  const [activeSection, setActiveSection] = useState('institute');
+  const [activeSection, setActiveSection] = useState('receipt');
 
-  const [instituteSettings, setInstituteSettings] = useState({});
   const [aboutSettings, setAboutSettings] = useState({});
   const [receiptSettings, setReceiptSettings] = useState({});
   const [formConfigSettings, setFormConfigSettings] = useState({});
@@ -684,12 +646,6 @@ const AdminSettings = () => {
     try {
       const response = await API.get('/settings');
       if (response.data.success && response.data.data) {
-        setInstituteSettings(response.data.data.institute || {
-          name: 'Droneco',
-          address: 'B-120 Sector 88 Noida UP IN 201305',
-          contact: '+91 931 900 7542',
-          email: 'info@godroneco.com'
-        });
         setAboutSettings(response.data.data.about || {
           developer: 'Droneco',
           supportEmail: 'info@godroneco.com',
@@ -735,8 +691,6 @@ const AdminSettings = () => {
   const { user } = useAuth();
 
   const menuItems = [
-    { id: 'institute', label: 'Institute Settings', icon: Building2 },
-
     { id: 'receipt', label: 'Receipt Settings', icon: Receipt },
     { id: 'form', label: 'Form Config', icon: Settings },
     { id: 'users', label: 'User Management', icon: Users },
@@ -750,21 +704,17 @@ const AdminSettings = () => {
   });
 
   const renderSection = () => {
-    if (loadingSettings && ['institute', 'fee', 'receipt'].includes(activeSection)) {
+    if (loadingSettings && ['receipt', 'form'].includes(activeSection)) {
       return <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading settings...</div>;
     }
 
     switch (activeSection) {
-      case 'institute': return <InstituteSettings settings={instituteSettings} setSettings={setInstituteSettings} onSave={handleSaveSettings} />;
-
-      case 'receipt': return <ReceiptSettings settings={receiptSettings} setSettings={setReceiptSettings} onSave={handleSaveSettings} />;
       case 'form': return <FormConfigSettings settings={formConfigSettings} setSettings={setFormConfigSettings} onSave={handleSaveSettings} />;
       case 'users': return <UserManagement />;
       case 'security': return <SecuritySettings />;
-
       case 'audit': return <AuditLogs />;
       case 'about': return <About settings={aboutSettings} setSettings={setAboutSettings} onSave={handleSaveSettings} />;
-      default: return <InstituteSettings settings={instituteSettings} setSettings={setInstituteSettings} onSave={handleSaveSettings} />;
+      default: return <ReceiptSettings settings={receiptSettings} setSettings={setReceiptSettings} onSave={handleSaveSettings} />;
     }
   };
 

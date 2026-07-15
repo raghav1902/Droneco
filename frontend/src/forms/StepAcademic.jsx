@@ -5,10 +5,14 @@ import CustomFieldsRenderer from './CustomFieldsRenderer';
 const StepAcademic = ({
   formData,
   handleNestedChange,
+  validationErrors,
   prevStep,
   nextStep,
   formConfig
 }) => {
+  const isRequired = formConfig?.qualification?.required;
+  const getError = (field) => validationErrors?.[`previous_qualification.${field}`];
+
   return (
     <div className="animate-slide-up-fade">
       <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '2.25rem', letterSpacing: '-0.010em' }}>
@@ -18,17 +22,18 @@ const StepAcademic = ({
       {formConfig?.qualification?.visible !== false && (
       <div style={{ borderBottom: '1px solid hsl(var(--border))', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
         <h3 style={{ fontSize: '0.85rem', color: 'var(--accent-hex)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', fontWeight: 600 }}>
-          Previous Qualification {formConfig?.qualification?.required ? '*' : ''}
+          Previous Qualification {isRequired ? '*' : ''}
         </h3>
 
         <div className="form-group">
-          <label className="form-label">School / College Name <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
+          <label className="form-label">School / College Name {isRequired ? '*' : <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span>}</label>
           <input
             type="text"
             className="form-input"
             value={formData.previous_qualification.school_college_name}
             onChange={(e) => handleNestedChange('previous_qualification', 'school_college_name', e.target.value)}
           />
+          {getError('school_college_name') && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{getError('school_college_name')}</span>}
         </div>
 
         <div className='form-grid-2'>

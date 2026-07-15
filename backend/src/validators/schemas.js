@@ -127,8 +127,8 @@ const createLeadSchema = z.object({
   semester: z.string().optional(),
   section: z.string().optional(),
   roll_number: z.string().optional(),
-  student_id: z.string().optional(),
   mode_of_admission: z.string().optional(),
+  learningMode: z.enum(['online', 'offline']).optional(),
 
   responses: z.record(z.any()).optional()
 });
@@ -158,13 +158,7 @@ const courseSchema = z.object({
 
 const updateCourseSchema = courseSchema.partial();
 
-const discountSchema = z.object({
-  name: z.string().min(1, "Discount name is required"),
-  type: z.enum(['Percentage', 'Flat']),
-  value: z.number().positive("Value must be a positive number"),
-  max_cap: z.number().optional().nullable(),
-  is_active: z.boolean().optional()
-});
+
 
 const collectFeeSchema = z.object({
   fee_id: z.string().min(1, "Fee ID is required"),
@@ -174,13 +168,7 @@ const collectFeeSchema = z.object({
 });
 
 const settingsSchema = z.object({
-  institute: z.object({
-    name: z.string().optional(),
-    logo: z.string().optional(),
-    address: z.string().optional(),
-    contact: z.string().optional(),
-    email: z.string().email("Invalid email format").optional().or(z.literal(''))
-  }).optional(),
+
   fee: z.object({
     defaultLateFee: z.number().min(0).optional(),
     lateFeeGraceDays: z.number().min(0).optional(),
@@ -218,7 +206,6 @@ const admissionSchema = z.object({
   lead_id: z.string().min(1, "Lead ID is required"),
   course_id: z.string().min(1, "Course ID is required"),
   total_amount: z.number().min(0, "Total amount must be >= 0"),
-  discount_amount: z.number().min(0).optional(),
   tax_amount: z.number().min(0).optional()
 });
 
@@ -254,7 +241,6 @@ module.exports = {
   addFeedbackSchema,
   courseSchema,
   updateCourseSchema,
-  discountSchema,
   collectFeeSchema,
   settingsSchema,
   admissionSchema,

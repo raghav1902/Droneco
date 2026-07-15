@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createPayment, getPayments } = require('../controllers/payment.controller');
+const { createPayment, getPayments, updatePaymentStatus } = require('../controllers/payment.controller');
 const { protect } = require('../middleware/authentication/authMiddleware');
 const { authorize } = require('../middleware/authorization/roleMiddleware');
 const { validate } = require('../middleware/validationMiddleware');
@@ -8,5 +8,6 @@ const { collectFeeSchema } = require('../validators/schemas');
 
 router.post('/', protect, authorize('admin', 'receptionist'), validate(collectFeeSchema), createPayment);
 router.get('/', protect, authorize('admin', 'receptionist'), getPayments);
+router.patch('/:id/status', protect, authorize('admin'), updatePaymentStatus);
 
 module.exports = router;

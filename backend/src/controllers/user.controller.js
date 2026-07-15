@@ -7,11 +7,12 @@ const Role = require('../models/role.model');
 const getUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 20;
+    let limit = parseInt(req.query.limit, 10) || 20;
+    limit = Math.min(limit, 100); // Cap limit to 100 to prevent DoS
     const startIndex = (page - 1) * limit;
 
-    const total = await User.countDocuments();
-    const users = await User.find({})
+    const total = await User.countDocuments({ is_deleted: { $ne: true } });
+    const users = await User.find({ is_deleted: { $ne: true } })
       .populate('role', 'name')
       .select('-password')
       .skip(startIndex)
@@ -46,6 +47,14 @@ const updateUser = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
+    if (req.user.id === user._id.toString() && status === 'inactive') {
+      return res.status(400).json({ success: false, message: 'You cannot deactivate your own account' });
+    }
+
+    if (req.user.id === user._id.toString() && roleName && roleName !== req.user.role) {
+      return res.status(400).json({ success: false, message: 'You cannot change your own role' });
+    }
+
     if (name) user.name = name;
     if (status) user.status = status;
     if (roleName) {
@@ -74,6 +83,10 @@ const deleteUser = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    if (req.user.id === user._id.toString()) {
+      return res.status(400).json({ success: false, message: 'You cannot delete your own account' });
     }
     
     user.is_deleted = true;

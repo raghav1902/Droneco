@@ -25,6 +25,9 @@ app.set('trust proxy', 1); // Trust first proxy (Render load balancer) for rate 
 
 // Security Headers
 app.use(helmet());
+// app.use(helmet({
+//   crossOriginResourcePolicy: false, // Allow frontend to load images from /uploads
+// }));
 
 // Global Middlewares
 app.use(cors({
@@ -75,7 +78,6 @@ app.use('/api/questions', require('./src/routes/questions.routes'));
 app.use('/api/fees', require('./src/routes/fee.routes'));
 app.use('/api/payments', require('./src/routes/payment.routes'));
 app.use('/api/admin', require('./src/routes/admin.routes'));
-app.use('/api/discounts', require('./src/routes/discount.routes'));
 app.use('/api/settings', require('./src/routes/settings.routes'));
 app.use('/api/upload', require('./src/routes/upload.routes'));
 
@@ -84,7 +86,11 @@ app.use('/api/v2/students', require('./src/routes/student.routes'));
 
 // Serve static uploads
 const path = require('path');
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, path, stat) => {
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+}));
 
 // Serve Frontend in Production
 if (process.env.NODE_ENV === 'production') {

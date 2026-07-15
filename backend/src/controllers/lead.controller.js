@@ -6,6 +6,7 @@
 const Lead = require('../models/lead.model');
 const FeedbackLog = require('../models/feedbacklog.model');
 const Settings = require('../models/settings.model');
+const Fee = require('../models/fee.model');
 
 // @desc    Create a new lead (Student Form Submission)
 // @route   POST /api/leads
@@ -35,13 +36,9 @@ const createLead = async (req, res) => {
       };
 
       try {
-        if (req.body.filler_type !== 'guardian') checkRequired('guardian', req.body.guardian?.first_name, 'Guardian Details');
-        checkRequired('address', req.body.permanent_address?.city, 'Permanent Address City');
-        checkRequired('category', req.body.category, 'Category');
-        checkRequired('blood_group', req.body.blood_group, 'Blood Group');
-        checkRequired('religion', req.body.religion, 'Religion');
-        checkRequired('disability', req.body.disability_status, 'Disability Status');
-        checkRequired('qualification', req.body.previous_qualification?.school_college_name, 'Previous Qualification (School/College Name)');
+        // Note: Guardian, Address, Category, Blood Group, Religion, Disability, and Qualification 
+        // fields have been removed from the public lead form to simplify the flow.
+        // They will be collected during the Student Admission Wizard.
         
         // Validate custom fields
         if (config.customFields && Array.isArray(config.customFields)) {
@@ -99,7 +96,8 @@ const getLeads = async (req, res) => {
     const { search, status, course, assignedTo, page = 1, limit = 50 } = req.query;
 
     const pageNum = parseInt(page, 10) || 1;
-    const limitNum = parseInt(limit, 10) || 50;
+    let limitNum = parseInt(limit, 10) || 50;
+    limitNum = Math.min(limitNum, 50); // Strictly cap limit to 50 to prevent scraping
     const skip = (pageNum - 1) * limitNum;
 
     // Build query object
@@ -191,10 +189,7 @@ const updateLeadStatus = async (req, res) => {
     lead.status = status;
     lead.updated_at = new Date();
 
-    // Auto-assign to the receptionist if it's currently unassigned and they are updating it
-    if (!lead.assigned_to_staff_id && req.user && req.user.role === 'receptionist') {
-      lead.assigned_to_staff_id = req.user.id;
-    }
+    // Note: Auto-assignment removed to prevent unintended hijacking of leads
 
     const updatedLead = await lead.save();
 
@@ -226,10 +221,14 @@ const addLeadFeedback = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Lead not found' });
     }
 
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: User is missing' });
+    }
+
     // Create feedback log
     const newLog = new FeedbackLog({
       lead_id: lead._id,
-      staff_id: req.user ? req.user.id : 'unknown', // Fallback in case auth isn't fully set up yet
+      staff_id: req.user.id,
       feedback_text,
       next_follow_up_date: next_follow_up_date ? new Date(next_follow_up_date) : null
     });
@@ -239,10 +238,7 @@ const addLeadFeedback = async (req, res) => {
     // Update lead's updated_at timestamp
     lead.updated_at = new Date();
 
-    // Auto-assign if receptionist adds feedback
-    if (!lead.assigned_to_staff_id && req.user && req.user.role === 'receptionist') {
-      lead.assigned_to_staff_id = req.user.id;
-    }
+    // Note: Auto-assignment removed
 
     await lead.save();
 
@@ -276,22 +272,41 @@ const updateLead = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Lead not found' });
     }
 
-    // Assign new fields
-    const updateData = req.body;
-    
-    // Merge nested objects properly if needed, but since Mongoose supports deep partial updates via Object.assign if handled carefully,
-    // or we can just iterate and set properties.
-    for (const key in updateData) {
-      // Prevent updating system fields
-      if (['status', 'assigned_to_staff_id', 'is_deleted', 'deleted_at', 'submitted_at'].includes(key)) {
-        continue;
+    // Role-based Ownership Guard: Receptionists can only edit leads assigned to them or unassigned leads
+    if (req.user.role === 'receptionist' || req.user.role === 'Counselor') {
+      if (lead.assigned_to_staff_id && lead.assigned_to_staff_id.toString() !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'Forbidden: You can only edit leads assigned to you or unassigned leads.' });
       }
       
-      if (typeof updateData[key] === 'object' && updateData[key] !== null && !Array.isArray(updateData[key])) {
-        // Deep merge for nested objects like permanent_address, father, etc.
-        lead[key] = { ...lead[key], ...updateData[key] };
-      } else {
-        lead[key] = updateData[key];
+      // Auto-assignment for unassigned leads has been removed. Receptionist must explicitly assign.
+    }
+
+    // Define strictly allowed top-level fields that can be updated via this endpoint
+    const allowedFields = [
+      'full_name', 'middle_name', 'last_name', 'gender', 'dob', 'blood_group',
+      'category', 'nationality', 'aadhaar_number', 'email', 'mobile_number', 'city',
+      'marital_status', 'identification_mark_1', 'identification_mark_2',
+      'disability_status', 'disability_description', 'preferred_language',
+      'alternate_mobile', 'personal_email', 'permanent_address', 'current_address',
+      'qualification', 'currentClass', 'interested_course_id', 'interestedCourse',
+      'interestedSubject', 'preferredBatch', 'learningMode', 'father', 'mother',
+      'guardian', 'emergency_contact', 'previous_qualification', 'tenth_details',
+      'twelfth_details', 'admission_year', 'department', 'branch', 'semester',
+      'section', 'mode_of_admission', 'queries', 'careerGoal', 'remarks', 'responses'
+    ];
+
+    const updateData = req.body;
+    
+    // Safely update nested objects without custom deep merge loop
+    for (const key in updateData) {
+      if (allowedFields.includes(key)) {
+        if (typeof updateData[key] === 'object' && updateData[key] !== null && !Array.isArray(updateData[key])) {
+          // Mark nested object as modified explicitly for mongoose
+          Object.assign(lead[key], updateData[key]);
+          lead.markModified(key);
+        } else {
+          lead[key] = updateData[key];
+        }
       }
     }
 
@@ -333,11 +348,56 @@ const getLeadFeedbackHistory = async (req, res) => {
   }
 };
 
+// @desc    Soft delete a lead
+// @route   DELETE /api/leads/:id
+// @access  Private (Admin)
+const deleteLead = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const lead = await Lead.findById(id);
+    if (!lead) {
+      return res.status(404).json({ success: false, message: 'Lead not found' });
+    }
+
+    if (lead.status === 'Enrolled') {
+      return res.status(400).json({ success: false, message: 'Cannot delete a lead that has already been enrolled. Please manage them via the Students tab.' });
+    }
+
+    // Soft delete
+    lead.is_deleted = true;
+    lead.deleted_at = new Date();
+    await lead.save();
+
+    // Soft delete associated pending fees so they don't skew financial reports
+    await Fee.updateMany({ lead_id: id }, { is_deleted: true });
+
+    // Soft delete associated FeedbackLogs
+    const FeedbackLog = require('../models/feedbacklog.model');
+    await FeedbackLog.updateMany({ lead_id: id }, { is_deleted: true });
+    
+    // Soft delete associated Payments via the soft-deleted fees
+    const Payment = require('../models/payment.model');
+    const fees = await Fee.find({ lead_id: id });
+    const feeIds = fees.map(f => f._id);
+    await Payment.updateMany({ fee_id: { $in: feeIds } }, { status: 'FAILED' }); // or use is_deleted if available
+
+    res.status(200).json({
+      success: true,
+      message: 'Lead deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting lead:', error);
+    res.status(500).json({ success: false, message: 'Server error deleting lead' });
+  }
+};
+
 module.exports = {
   createLead,
   getLeads,
   updateLeadStatus,
   addLeadFeedback,
   getLeadFeedbackHistory,
-  updateLead
+  updateLead,
+  deleteLead
 };

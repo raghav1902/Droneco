@@ -74,7 +74,7 @@ const StepPersonal = ({ formData, handleBasicChange, prevStep, nextStep, formCon
         </div>
 
         <div className="form-group">
-          <label className="form-label">Personal Email (Optional)</label>
+          <label className="form-label">Personal Email <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
           <input
             type="email"
             name="personal_email"

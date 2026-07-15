@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Phone, MapPin, Calendar, FileText, CreditCard, History, Clock, Bookmark, ArrowLeft, CheckCircle, Edit, Download, GraduationCap, Briefcase, Printer } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, FileText, CreditCard, History, Clock, Bookmark, ArrowLeft, CheckCircle, Edit, Download, GraduationCap, Briefcase, Printer, Upload, Loader2 } from 'lucide-react';
 import API from '../../../api/api';
 import { showToast } from '../../../utils/toast';
 import StudentIdCard from './StudentIdCard';
@@ -9,6 +9,8 @@ const StudentProfile = ({ student, onBack, onCollectFee }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [previewDoc, setPreviewDoc] = useState(null);
   const [showIdCard, setShowIdCard] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const [feeData, setFeeData] = useState(null);
   const [payments, setPayments] = useState([]);
@@ -43,6 +45,50 @@ const StudentProfile = ({ student, onBack, onCollectFee }) => {
     fetchData();
   }, [student]);
 
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('document', file);
+
+    try {
+      // 1. Upload the file to the server
+      const uploadRes = await API.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (uploadRes.data?.success) {
+        const photoUrl = uploadRes.data.filePath;
+
+        // 2. Update the student's profile with the new photo URL
+        const studentId = student._id || student.id;
+        const updateRes = await API.put(`/v2/students/${studentId}`, {
+          media: {
+            ...student.media,
+            photo_url: photoUrl
+          }
+        });
+
+        if (updateRes.data?.success) {
+          // Update the local student object so the UI refreshes immediately
+          if (!student.media) student.media = {};
+          student.media.photo_url = photoUrl;
+          alert('Profile photo uploaded successfully! You can now print the ID card.');
+        }
+      }
+    } catch (err) {
+      console.error('Error uploading photo:', err);
+      alert('Failed to upload photo. Please try again.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: User },
     { id: 'personal', label: 'Personal Info', icon: FileText },
@@ -55,7 +101,13 @@ const StudentProfile = ({ student, onBack, onCollectFee }) => {
 
   if (!student) return null;
 
-  const joinDate = new Date(student.submitted_at || student.created_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  // Support both Lead schema (v1) and Student schema (v2)
+  const fullName = student.full_name || `${student.personal_info?.first_name || ''} ${student.personal_info?.last_name || ''}`.trim() || 'Unknown Student';
+  const phone = student.mobile_number || student.contact_info?.mobile_number || 'N/A';
+  const emailStr = student.email || student.contact_info?.email || 'N/A';
+  const cityStr = student.city || student.addresses?.current?.city || student.addresses?.permanent?.city || 'N/A';
+  const joinDate = new Date(student.submitted_at || student.createdAt || student.created_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const courseIdStr = student.interestedCourse || student.interested_course_id?.course_name || student.department_id?.course_name || 'N/A';
 
   return (
     <div className="animate-fade-in pb-12">
@@ -68,7 +120,7 @@ const StudentProfile = ({ student, onBack, onCollectFee }) => {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Student Profile</h1>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-sm text-muted-foreground">ID:</span>
-            <span className="text-sm font-semibold text-primary">{student.id || student._id}</span>
+            <span className="text-sm font-semibold text-primary">{student.enrollment_number || student.student_id || student.id || student._id}</span>
           </div>
         </div>
         <div className="ml-auto flex gap-3">
@@ -91,15 +143,19 @@ const StudentProfile = ({ student, onBack, onCollectFee }) => {
           <div className="bg-card border border-border rounded-xl shadow-sm sticky top-6 overflow-hidden">
             <div className="h-24 bg-gradient-to-r from-primary/80 to-accent"></div>
             <div className="px-6 pb-6 relative text-center">
-              <div className="w-24 h-24 rounded-full bg-surface border-4 border-card text-primary flex items-center justify-center text-4xl font-bold shadow-md mx-auto -mt-12 mb-4 relative">
-                {student.full_name ? student.full_name.charAt(0).toUpperCase() : 'S'}
-                <div className="absolute bottom-0 right-0 w-6 h-6 bg-emerald-500 border-2 border-card rounded-full"></div>
+              <div className="w-24 h-24 rounded-full bg-surface border-4 border-card text-primary flex items-center justify-center text-4xl font-bold shadow-md mx-auto -mt-12 mb-4 relative overflow-hidden">
+                {student.media?.photo_url || student.photo_url ? (
+                  <img src={`${student.media?.photo_url || student.photo_url}?t=${Date.now()}`} alt={fullName} className="w-full h-full object-cover" />
+                ) : (
+                  fullName.charAt(0).toUpperCase()
+                )}
+                <div className="absolute bottom-0 right-0 w-6 h-6 bg-emerald-500 border-2 border-card rounded-full z-10"></div>
               </div>
-              <h2 className="text-xl font-bold text-foreground">{student.full_name}</h2>
-              <p className="text-sm text-muted-foreground mb-4">Course ID: {student.interested_course_id || 'N/A'}</p>
+              <h2 className="text-xl font-bold text-foreground">{fullName}</h2>
+              <p className="text-sm text-muted-foreground mb-4">Course: {courseIdStr}</p>
 
-              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-6 border ${student.status === 'Enrolled' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}>
-                {student.status}
+              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-6 border ${student.status === 'ACTIVE' || student.status === 'Enrolled' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}>
+                {student.status || 'ACTIVE'}
               </span>
 
               <div className="flex flex-col gap-3 text-left border-t border-border pt-6">
@@ -107,21 +163,21 @@ const StudentProfile = ({ student, onBack, onCollectFee }) => {
                   <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0"><Phone className="w-4 h-4" /></div>
                   <div className="flex-1 overflow-hidden">
                     <p className="text-xs text-muted-foreground">Phone</p>
-                    <p className="text-sm font-medium text-foreground truncate">{student.mobile_number || 'N/A'}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{phone}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0"><Mail className="w-4 h-4" /></div>
                   <div className="flex-1 overflow-hidden">
                     <p className="text-xs text-muted-foreground">Email</p>
-                    <p className="text-sm font-medium text-foreground truncate">{student.email || 'N/A'}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{emailStr}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0"><MapPin className="w-4 h-4" /></div>
                   <div className="flex-1 overflow-hidden">
                     <p className="text-xs text-muted-foreground">Location</p>
-                    <p className="text-sm font-medium text-foreground truncate">{student.city || 'N/A'}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{cityStr}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -285,10 +341,7 @@ const StudentProfile = ({ student, onBack, onCollectFee }) => {
                           <span className="text-muted-foreground">Total Course Fee:</span>
                           <span className="font-semibold text-foreground">₹{feeData.total_amount}</span>
                         </div>
-                        <div className="flex justify-between items-center p-4 border border-border rounded-lg bg-background">
-                          <span className="text-muted-foreground">Discount Applied:</span>
-                          <span className="font-semibold text-emerald-600">-₹{feeData.discount_amount}</span>
-                        </div>
+
                         <div className="flex justify-between items-center p-4 border border-border rounded-lg bg-background">
                           <span className="text-muted-foreground">Tax Applied:</span>
                           <span className="font-semibold text-rose-600">+₹{feeData.tax_amount}</span>
@@ -344,14 +397,51 @@ const StudentProfile = ({ student, onBack, onCollectFee }) => {
                   <motion.div key="documents" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
                     <div className="flex justify-between items-center mb-6">
                       <h3 className="text-lg font-semibold text-foreground">Uploaded Documents</h3>
+                      <div>
+                        <input 
+                          type="file" 
+                          ref={fileInputRef} 
+                          onChange={handlePhotoUpload} 
+                          accept="image/jpeg, image/png, image/webp" 
+                          style={{ display: 'none' }} 
+                        />
+                        <button 
+                          className="btn btn-secondary btn-sm flex items-center gap-2" 
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                        >
+                          {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          {isUploading ? 'Uploading...' : 'Upload Profile Photo'}
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="flex flex-col items-center justify-center h-[250px] bg-muted/30 border border-dashed border-border rounded-lg">
-                      <Bookmark className="w-12 h-12 text-muted-foreground/30 mb-3" />
-                      <p className="text-foreground font-medium">No documents uploaded yet</p>
-                      <p className="text-sm text-muted-foreground mb-4">Files like photos and ID cards will appear here.</p>
-                      <button className="btn btn-secondary btn-sm" onClick={() => alert('Document upload modal coming soon!')}>Upload Document</button>
-                    </div>
+                    {!student?.media?.photo_url && !student?.media?.aadhaar_url && !student?.media?.marksheet_url && !student?.media?.signature_url ? (
+                      <div className="flex flex-col items-center justify-center h-[250px] bg-muted/30 border border-dashed border-border rounded-lg">
+                        <Bookmark className="w-12 h-12 text-muted-foreground/30 mb-3" />
+                        <p className="text-foreground font-medium">No documents uploaded yet</p>
+                        <p className="text-sm text-muted-foreground mb-4">Files like photos and ID cards will appear here.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-4">
+                        {[
+                          { label: 'Student Photo', url: student?.media?.photo_url },
+                          { label: 'Aadhaar Card', url: student?.media?.aadhaar_url },
+                          { label: 'Previous Marksheet', url: student?.media?.marksheet_url },
+                          { label: 'Signature', url: student?.media?.signature_url }
+                        ].map((doc, idx) => doc.url ? (
+                          <div key={idx} className="flex items-center justify-between p-4 border border-border rounded-lg bg-surface">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-primary/10 rounded flex items-center justify-center">
+                                <FileText className="w-5 h-5 text-primary" />
+                              </div>
+                              <span className="font-medium text-foreground">{doc.label}</span>
+                            </div>
+                            <a href={`http://localhost:5000${doc.url}`} target="_blank" rel="noreferrer" className="text-primary hover:underline text-sm font-medium">View File</a>
+                          </div>
+                        ) : null)}
+                      </div>
+                    )}
                   </motion.div>
                 )}
 

@@ -4,13 +4,19 @@ import API from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import AppLayout from '../layouts/AppLayout';
 import FeeDashboard from './components/FeeDashboard';
-import FeeStructure from './components/FeeStructure';
-import DiscountManagement from './components/DiscountManagement';
 import Reports from './components/Reports';
 import AdminSettings from './components/settings/AdminSettings';
 import LeadDetailModal from './components/LeadDetailModal';
 import LeadsTable from './components/LeadsTable';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
+import AdmissionWizard from '../receptionist/components/admissions/AdmissionWizard';
+import ReceptionDashboard from '../receptionist/components/ReceptionDashboard';
+import StudentsList from '../receptionist/components/students/StudentsList';
+import StudentProfile from '../receptionist/components/students/StudentProfile';
+import CollectFee from '../receptionist/components/CollectFee';
+import ReceiptPage from '../receptionist/components/ReceiptPage';
+import DueList from '../receptionist/components/DueList';
+import PaymentHistory from '../receptionist/components/PaymentHistory';
 import { courseSchema, createQuestionSchema, validateForm } from '../utils/validators';
 
 const AdminDashboard = () => {
@@ -33,14 +39,20 @@ const AdminDashboard = () => {
 
   // Selected Lead
   const [selectedLead, setSelectedLead] = useState(null);
+  const [selectedLeadForAdmission, setSelectedLeadForAdmission] = useState(null);
   const [feedbackHistory, setFeedbackHistory] = useState([]);
   const [admittingLeadId, setAdmittingLeadId] = useState(null);
+
+  // States for shared receptionist views
+  const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);
+  const [selectedFeeStudent, setSelectedFeeStudent] = useState(null);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
 
   // Create/Edit Course
   const [showCourseForm, setShowCourseForm] = useState(false);
   const [editingCourseId, setEditingCourseId] = useState(null);
   const [courseForm, setCourseForm] = useState({
-    course_name: '', code: '', description: '', duration_months: 6
+    course_name: '', code: '', description: '', duration_months: 6, total_fee: 0, installments_allowed: false
   });
   const [courseError, setCourseError] = useState(null);
 
@@ -117,23 +129,10 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleAdmitStudent = async (lead) => {
-    if (!window.confirm(`Are you sure you want to admit ${lead.full_name} as an official student?`)) {
-      return;
-    }
-    setAdmittingLeadId(lead.id || lead._id);
-    try {
-      await API.post(`/v2/students/admit/${lead.id || lead._id}`);
-      alert('Student admitted successfully!');
-      setSelectedLead(null);
-      fetchLeads(); // Refresh leads table
-      fetchStats(); // Refresh stats
-    } catch (err) {
-      console.error('Error admitting student:', err);
-      alert(err.response?.data?.message || 'Failed to admit student');
-    } finally {
-      setAdmittingLeadId(null);
-    }
+  const handleAdmitStudent = (lead) => {
+    setSelectedLeadForAdmission(lead);
+    setActiveTab('admission-wizard');
+    setSelectedLead(null);
   };
 
   const getCourseName = (id) => {
@@ -152,12 +151,22 @@ const AdminDashboard = () => {
       return;
     }
     try {
+      const payload = {
+        course_name: courseForm.course_name,
+        code: courseForm.code,
+        description: courseForm.description,
+        duration_months: courseForm.duration_months,
+        fee_structure: {
+          total_fee: courseForm.total_fee,
+          installments_allowed: courseForm.installments_allowed
+        }
+      };
       if (editingCourseId) {
-        await API.put(`/courses/${editingCourseId}`, courseForm);
+        await API.put(`/courses/${editingCourseId}`, payload);
       } else {
-        await API.post('/courses', courseForm);
+        await API.post('/courses', payload);
       }
-      setCourseForm({ course_name: '', code: '', description: '', duration_months: 6 });
+      setCourseForm({ course_name: '', code: '', description: '', duration_months: 6, total_fee: 0, installments_allowed: false });
       setEditingCourseId(null);
       setShowCourseForm(false);
       fetchSettingsData();
@@ -171,7 +180,9 @@ const AdminDashboard = () => {
       course_name: course.course_name,
       code: course.code,
       description: course.description,
-      duration_months: course.duration_months
+      duration_months: course.duration_months,
+      total_fee: course.fee_structure?.total_fee || 0,
+      installments_allowed: course.fee_structure?.installments_allowed || false
     });
     setEditingCourseId(course.id);
     setShowCourseForm(true);
@@ -329,7 +340,20 @@ const AdminDashboard = () => {
                     <label className="form-label">Duration (in Months)</label>
                     <input type="number" className="form-input" value={courseForm.duration_months} onChange={(e) => setCourseForm({ ...courseForm, duration_months: Number(e.target.value) })} required />
                   </div>
-                  <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                    <div className="form-group">
+                      <label className="form-label">Total Fee (₹)</label>
+                      <input type="number" className="form-input" value={courseForm.total_fee} onChange={(e) => setCourseForm({ ...courseForm, total_fee: e.target.value === '' ? '' : Number(e.target.value) })} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Installments Allowed</label>
+                      <select className="form-select" value={courseForm.installments_allowed ? 'Yes' : 'No'} onChange={(e) => setCourseForm({ ...courseForm, installments_allowed: e.target.value === 'Yes' })}>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="form-group" style={{ marginBottom: '1.5rem', marginTop: '1rem' }}>
                     <label className="form-label">Course Description <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
                     <textarea className="form-textarea" rows="2" value={courseForm.description} onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}></textarea>
                   </div>
@@ -347,6 +371,7 @@ const AdminDashboard = () => {
                     <th style={{ padding: '1rem 1.5rem', color: 'var(--text-secondary)' }}>Code</th>
                     <th style={{ padding: '1rem 1.5rem', color: 'var(--text-secondary)' }}>Course Name</th>
                     <th style={{ padding: '1rem 1.5rem', color: 'var(--text-secondary)' }}>Duration</th>
+                    <th style={{ padding: '1rem 1.5rem', color: 'var(--text-secondary)' }}>Total Fee</th>
                     <th style={{ padding: '1rem 1.5rem', color: 'var(--text-secondary)' }}>Status</th>
                     <th style={{ padding: '1rem 1.5rem', color: 'var(--text-secondary)', textAlign: 'right' }}>Actions</th>
                   </tr>
@@ -360,6 +385,7 @@ const AdminDashboard = () => {
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{course.description}</div>
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>{course.duration_months} M</td>
+                      <td style={{ padding: '1rem 1.5rem' }}>₹{(course.fee_structure?.total_fee || 0).toLocaleString()} <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>({course.fee_structure?.installments_allowed ? 'Installments' : 'No Installments'})</span></td>
                       <td style={{ padding: '1rem 1.5rem' }}>
                         <span className={`badge ${course.is_active ? 'badge-enrolled' : 'badge-not-interested'}`}>{course.is_active ? 'Active' : 'Inactive'}</span>
                       </td>
@@ -486,11 +512,37 @@ const AdminDashboard = () => {
         />
 
         {/* NEW TABS FOR FEE MANAGEMENT */}
-        {activeTab === 'fee_dashboard' && <FeeDashboard />}
-        {activeTab === 'fee_structure' && <FeeStructure />}
-        {activeTab === 'discounts' && <DiscountManagement />}
+        {activeTab === 'fee_dashboard' && <FeeDashboard setActiveTab={setActiveTab} />}
         {activeTab === 'reports' && <Reports />}
         {activeTab === 'settings' && <AdminSettings />}
+
+        {activeTab === 'daily-operations' && <ReceptionDashboard />}
+        
+        {activeTab === 'students' && (
+          selectedStudentProfile ?
+            <StudentProfile student={selectedStudentProfile} onBack={() => setSelectedStudentProfile(null)} /> :
+            <StudentsList
+              onViewProfile={setSelectedStudentProfile}
+              onEditStudent={handleOpenLead}
+              onCollectFee={(student) => { setSelectedFeeStudent(student); setActiveTab('collect-fee'); }}
+              onEnrollNew={() => { setSelectedLeadForAdmission(null); setActiveTab('admission-wizard'); }}
+            />
+        )}
+
+        {activeTab === 'collect-fee' && <CollectFee student={selectedFeeStudent} onPaymentSuccess={(tab) => { if (tab) setActiveTab(tab); else { setActiveTab('students'); setSelectedFeeStudent(null); } }} />}
+        {activeTab === 'receipt' && <ReceiptPage transaction={selectedTransaction} onBack={() => { setActiveTab('payment-history'); setSelectedTransaction(null); }} />}
+        {activeTab === 'due-list' && <DueList onCollectFee={(student) => { setSelectedFeeStudent(student); setActiveTab('collect-fee'); }} />}
+        {activeTab === 'payment-history' && <PaymentHistory onViewReceipt={(txn) => { setSelectedTransaction(txn); setActiveTab('receipt'); }} />}
+
+        {activeTab === 'admission-wizard' && (
+          <AdmissionWizard
+            lead={selectedLeadForAdmission}
+            courses={courses}
+            questions={questions}
+            onComplete={() => { setActiveTab('leads'); setSelectedLeadForAdmission(null); fetchLeads(); fetchStats(); }}
+            onCancel={() => { setSelectedLeadForAdmission(null); setActiveTab('leads'); }}
+          />
+        )}
       </div>
     </AppLayout>
   );

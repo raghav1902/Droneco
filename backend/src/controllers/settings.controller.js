@@ -25,17 +25,13 @@ const getPublicSettings = async (req, res) => {
     if (!settings) {
       settings = await Settings.create({ type: 'global' });
     }
-    // Only return non-sensitive settings needed for the form
-    res.status(200).json({
-      success: true,
-      data: {
-        institute: {
-          name: settings.institute.name,
-          logo: settings.institute.logo
-        },
-        formConfig: settings.formConfig
-      }
-    });
+      // Only return non-sensitive settings needed for the form
+      res.status(200).json({
+        success: true,
+        data: {
+          formConfig: settings.formConfig
+        }
+      });
   } catch (error) {
     console.error('Error fetching public settings:', error);
     res.status(500).json({ success: false, message: 'Server error fetching settings' });
@@ -47,16 +43,13 @@ const getPublicSettings = async (req, res) => {
 // @access  Private (Admin)
 const updateSettings = async (req, res) => {
   try {
-    const { institute, fee, receipt, formConfig } = req.body;
+    const { fee, receipt, formConfig } = req.body;
 
     let settings = await Settings.findOne({ type: 'global' });
     if (!settings) {
       settings = await Settings.create({ type: 'global' });
     }
 
-    if (institute) {
-      settings.institute = { ...settings.institute.toObject(), ...institute };
-    }
     if (fee) {
       settings.fee = { ...settings.fee.toObject(), ...fee };
     }

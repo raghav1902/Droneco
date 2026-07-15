@@ -28,6 +28,30 @@ const Reports = () => {
     fetchReports();
   }, []);
 
+  const handleExportCSV = () => {
+    try {
+      const headers = ['Student Name', 'Course', 'Total Fee', 'Paid', 'Pending'];
+      const rows = reportsData.pendingFees.map(student => 
+        [student.name, student.course, student.total, student.paid, student.pending].join(',')
+      );
+      
+      const csvContent = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'Pending_Fees_Report.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('Export successful', 'success');
+    } catch (error) {
+      showToast('Error exporting data', 'error');
+    }
+  };
+
   return (
     <div className="animate-fade-in reports-print-container">
       <style>
@@ -50,8 +74,8 @@ const Reports = () => {
             <option>This Month</option>
             <option>This Year</option>
           </select>
-          <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={(e) => { e.preventDefault(); window.print(); }}>
-            <Download size={16} /> Export PDF
+          <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={(e) => { e.preventDefault(); handleExportCSV(); }}>
+            <Download size={16} /> Export CSV
           </button>
         </div>
       </div>

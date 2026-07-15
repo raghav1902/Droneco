@@ -17,7 +17,8 @@ const getReports = async (req, res) => {
     sevenDaysAgo.setHours(0, 0, 0, 0);
 
     const payments = await Payment.find({
-      transaction_date: { $gte: sevenDaysAgo }
+      transaction_date: { $gte: sevenDaysAgo },
+      status: 'SUCCESS'
     });
 
     const dailyCollectionMap = {};
@@ -41,7 +42,7 @@ const getReports = async (req, res) => {
     }));
 
     // 2. Payment Method Distribution
-    const allPayments = await Payment.find();
+    const allPayments = await Payment.find({ status: 'SUCCESS' });
     const methodMap = {};
     allPayments.forEach(p => {
       const method = p.payment_method || 'Other';
@@ -54,16 +55,28 @@ const getReports = async (req, res) => {
       value: methodMap[name]
     }));
 
-    // 3. Top 5 Pending Fees
-    const pendingFeesRaw = await Fee.find({ due_amount: { $gt: 0 } })
-      .sort({ due_amount: -1 })
-      .limit(5)
-      .populate('lead_id', 'full_name')
-      .populate('course_id', 'course_name');
+    // 3. Top 5 Pending Fees (Only for Enrolled students)
+    const pendingFeesRaw = await Fee.aggregate([
+      { $match: { due_amount: { $gt: 0 }, is_deleted: { $ne: true } } },
+      {
+        $lookup: {
+          from: 'leads',
+          localField: 'lead_id',
+          foreignField: '_id',
+          as: 'lead'
+        }
+      },
+      { $unwind: '$lead' },
+      { $match: { 'lead.status': 'Enrolled' } },
+      { $sort: { due_amount: -1 } },
+      { $limit: 5 }
+    ]);
+
+    await Fee.populate(pendingFeesRaw, { path: 'course_id', select: 'course_name' });
 
     const pendingFees = pendingFeesRaw.map(fee => ({
       id: fee._id,
-      name: fee.lead_id ? fee.lead_id.full_name : 'Unknown Student',
+      name: fee.lead ? fee.lead.full_name : 'Unknown Student',
       course: fee.course_id ? fee.course_id.course_name : 'Unknown Course',
       total: fee.net_payable,
       paid: fee.paid_amount,
@@ -71,18 +84,33 @@ const getReports = async (req, res) => {
     }));
 
     // 4. Totals for Fee Dashboard
-    const totalFeesAgg = await Payment.aggregate([{ $group: { _id: null, total: { $sum: '$amount_paid' } } }]);
-    const totalPendingAgg = await Fee.aggregate([{ $group: { _id: null, total: { $sum: '$due_amount' } } }]);
+    const totalFeesAgg = await Payment.aggregate([
+      { $match: { status: 'SUCCESS' } },
+      { $group: { _id: null, total: { $sum: '$amount_paid' } } }
+    ]);
+    const totalPendingAgg = await Fee.aggregate([
+      {
+        $lookup: {
+          from: 'leads',
+          localField: 'lead_id',
+          foreignField: '_id',
+          as: 'lead'
+        }
+      },
+      { $unwind: '$lead' },
+      { $match: { 'lead.status': 'Enrolled', is_deleted: { $ne: true } } },
+      { $group: { _id: null, total: { $sum: '$due_amount' } } }
+    ]);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayCollectionAgg = await Payment.aggregate([
-      { $match: { transaction_date: { $gte: today } } },
+      { $match: { transaction_date: { $gte: today }, status: 'SUCCESS' } },
       { $group: { _id: null, total: { $sum: '$amount_paid' } } }
     ]);
 
     const Lead = require('../models/lead.model');
-    const totalStudents = await Lead.countDocuments({ status: 'Enrolled' });
+    const totalStudents = await Lead.countDocuments({ status: 'Enrolled', is_deleted: { $ne: true } });
 
     // 5. Recent Transactions
     const recentTxnRaw = await Payment.find()
@@ -98,7 +126,7 @@ const getReports = async (req, res) => {
       studentName: txn.fee_id && txn.fee_id.lead_id ? txn.fee_id.lead_id.full_name : 'Unknown Student',
       amount: txn.amount_paid,
       method: txn.payment_method || 'Other',
-      status: 'Success' // Payments in DB are successful
+      status: txn.status || 'SUCCESS'
     }));
 
     // 6. Monthly Revenue Trend (for Fee Dashboard)
@@ -109,7 +137,8 @@ const getReports = async (req, res) => {
           transaction_date: {
             $gte: new Date(`${currentYear}-01-01`),
             $lt: new Date(`${currentYear + 1}-01-01`)
-          }
+          },
+          status: 'SUCCESS'
         }
       },
       { $group: { _id: { $month: "$transaction_date" }, collected: { $sum: "$amount_paid" } } }

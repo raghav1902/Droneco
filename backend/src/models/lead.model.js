@@ -69,7 +69,7 @@ const LeadSchema = new mongoose.Schema({
   preferredBatch: { type: String },
   learningMode: {
     type: String,
-    enum: ['online', 'offline', 'hybrid']
+    enum: ['online', 'offline']
   },
 
   // --- Parent / Guardian Details ---
@@ -178,7 +178,7 @@ const LeadSchema = new mongoose.Schema({
 
   submitted_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now }
-});
+}, { strict: false });
 
 // Pre-find hook to filter out soft-deleted documents
 LeadSchema.pre(/^find/, function (next) {

@@ -6,16 +6,6 @@ const SettingsSchema = new mongoose.Schema({
     default: 'global',
     unique: true
   },
-  institute: {
-    name: { type: String, default: 'Droneco' },
-    logo: { type: String, default: '' },
-    address: { type: String, default: 'B-120 Sector 88 Noida UP IN 201305' },
-    contact: { type: String, default: '+91 931 900 7542' },
-    email: { type: String, default: 'info@godroneco.com' },
-    website: { type: String, default: 'https://godroneco.com' },
-    timezone: { type: String, default: 'UTC (GMT+0)' },
-    currency: { type: String, default: 'INR' }
-  },
   about: {
     developer: { type: String, default: 'Droneco' },
     supportEmail: { type: String, default: 'info@godroneco.com' },

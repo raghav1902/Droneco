@@ -6,6 +6,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 const Role = require('../models/role.model');
+const { logAudit } = require('../utils/auditLogger');
 
 // Generate JWT Helper
 const generateToken = (id) => {
@@ -21,10 +22,10 @@ const generateToken = (id) => {
 // @access  Public (for seeding purposes initially)
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password, roleName } = req.body;
+    const { name, email, password } = req.body; // Prevent clients from passing roleName
 
-    if (!name || !email || !password || !roleName) {
-      return res.status(400).json({ success: false, message: 'Please provide all required fields (name, email, password, roleName)' });
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Please provide all required fields (name, email, password)' });
     }
 
     // Check if user already exists
@@ -33,10 +34,11 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
 
-    // Find the role, or create it if it doesn't exist (helpful for initial setup)
-    let role = await Role.findOne({ name: roleName });
+    // Hardcode to an unprivileged role to prevent arbitrary Admin creation
+    const safeRoleName = 'Student';
+    let role = await Role.findOne({ name: safeRoleName });
     if (!role) {
-      role = await Role.create({ name: roleName, permissions: [] });
+      return res.status(500).json({ success: false, message: 'Default role is missing from the system' });
     }
 
     // Create user
@@ -112,6 +114,9 @@ const loginUser = async (req, res) => {
           token: generateToken(user._id)
         }
       });
+
+      // Log successful login
+      await logAudit(user._id, 'Login', 'Successful login', req.ip);
     } else {
       res.status(401).json({ success: false, message: 'Invalid email or password' });
     }

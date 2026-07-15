@@ -1,206 +1,201 @@
 # Custom Database Design & Entity Relationship (ER) Diagram
 
-This document describes the schema design, field definitions, and relationships for the customized Coaching Institute Lead Management System database.
+This document describes the schema design, field definitions, and relationships for the complete Coaching Institute Lead Management System database.
 
 ---
 
 ## 1. Entity-Relationship (ER) Diagram
 
-Below is the updated ER diagram mapping out the 8 requested collections: `staff`, `courses`, `lead_status`, `leads`, `questions`, `lead_responses`, `feedback_responses`, and `audit_log`.
+Below is the complete ER diagram mapping out the entire system exactly as implemented in the backend models: Leads (Inquiries), Students, Fees, Payments, Parents, Courses, and other foundational collections.
 
 ```mermaid
 erDiagram
-    STAFF {
+    USERS {
         ObjectId _id PK
         String name
         String email "Unique, Indexed"
         String password "Hashed"
-        String role "admin | receptionist"
+        String role "Admin | Receptionist"
         String status "active | inactive"
-        Date createdAt
-        Date updatedAt
     }
 
     COURSES {
         ObjectId _id PK
         String courseName "Unique"
         String code "Unique"
-        String description
         Number durationMonths
         Boolean isActive
-        Date createdAt
+    }
+    
+    PROGRAMS {
+        ObjectId _id PK
+        String name
+        String code "Unique"
+        ObjectId department_id FK
     }
 
-    LEAD_STATUS {
+    DEPARTMENTS {
         ObjectId _id PK
-        String name "e.g., Contacted"
-        String key "e.g., contacted"
-        String colorCode
-        Date createdAt
+        String name
+        String code
     }
 
     LEADS {
         ObjectId _id PK
-        String fullName
+        String full_name
         String email
-        String mobileNumber
-        String city
-        ObjectId interestedCourseId FK "ref COURSES (Nullable)"
-        ObjectId statusId FK "ref LEAD_STATUS"
-        ObjectId assignedToStaffId FK "ref STAFF (Nullable)"
-        Date submittedAt
-        Date updatedAt
+        String mobile_number
+        ObjectId interested_course_id FK "ref COURSES"
+        String status "Enum: New, Contacted, Interested, Not Interested, Enrolled"
+        ObjectId assigned_to_staff_id FK "ref USERS"
+        Date submitted_at
+    }
+
+    STUDENTS {
+        ObjectId _id PK
+        String student_id
+        String enrollment_number
+        ObjectId parent_id FK "ref PARENTS"
+        ObjectId department_id FK "ref COURSES/DEPARTMENTS"
+        ObjectId program_id FK "ref PROGRAMS"
+        String status "ACTIVE | SUSPENDED | ALUMNI | DROPOUT"
+    }
+
+    PARENTS {
+        ObjectId _id PK
+        String primary_contact "FATHER | MOTHER | GUARDIAN"
+    }
+
+    FEES {
+        ObjectId _id PK
+        ObjectId lead_id FK "ref LEADS"
+        ObjectId student_id FK "ref STUDENTS"
+        ObjectId course_id FK "ref COURSES"
+        Number total_amount
+        Number net_payable
+        Number paid_amount
+        Number due_amount
+        String status "Pending | Partial | Paid"
+    }
+
+    PAYMENTS {
+        ObjectId _id PK
+        ObjectId fee_id FK "ref FEES"
+        ObjectId student_id FK "ref STUDENTS"
+        Number amount_paid
+        String payment_method "Cash | UPI | Card | Bank Transfer | Cheque"
+        String receipt_number
+        String status "SUCCESS | PENDING | FAILED | REFUNDED"
+    }
+
+    DISCOUNTRULES {
+        ObjectId _id PK
+        String name
+        String type "Percentage | Flat"
+        Number value
+        Boolean is_active
+    }
+
+    SETTINGS {
+        ObjectId _id PK
+        String type "global"
     }
 
     QUESTIONS {
         ObjectId _id PK
         String questionText
-        Number stepNumber "2 | 3"
-        String fieldType "text | dropdown | radio | checkbox"
-        String[] options "Array of choices"
-        Boolean isRequired
-        Boolean isActive
-        Date createdAt
+        Number stepNumber
+        String fieldType
     }
 
-    LEAD_RESPONSES {
+    FEEDBACKLOG {
         ObjectId _id PK
-        ObjectId leadId FK "ref LEADS"
-        ObjectId questionId FK "ref QUESTIONS"
-        String responseValue
-        Date createdAt
-    }
-
-    FEEDBACK_RESPONSES {
-        ObjectId _id PK
-        ObjectId leadId FK "ref LEADS"
-        ObjectId staffId FK "ref STAFF"
-        String feedbackText
-        Date nextFollowUpDate "Nullable"
-        Date createdAt
+        ObjectId lead_id FK "ref LEADS"
+        String staff_id FK "ref USERS"
+        String feedback_text
+        Date next_follow_up_date
     }
 
     AUDIT_LOG {
         ObjectId _id PK
-        ObjectId staffId FK "ref STAFF"
         String action
         String details
-        Date timestamp
     }
 
-    STAFF ||--o{ LEADS : "assigned_to"
+    %% Relationships
+    USERS ||--o{ LEADS : "assigned_to"
     COURSES ||--o{ LEADS : "selected_in"
-    LEAD_STATUS ||--o{ LEADS : "defines_state_of"
-    LEADS ||--o{ LEAD_RESPONSES : "submits"
-    QUESTIONS ||--o{ LEAD_RESPONSES : "defines_value_for"
-    LEADS ||--o{ FEEDBACK_RESPONSES : "receives"
-    STAFF ||--o{ FEEDBACK_RESPONSES : "writes"
-    STAFF ||--o{ AUDIT_LOG : "triggers"
+    
+    LEADS ||--o{ FEEDBACKLOG : "receives"
+    USERS ||--o{ FEEDBACKLOG : "writes"
+    
+    LEADS ||--o| STUDENTS : "converts_to"
+    PARENTS ||--o{ STUDENTS : "has_child"
+    COURSES ||--o{ STUDENTS : "enrolls"
+    PROGRAMS ||--o{ STUDENTS : "enrolls_in_program"
+
+    STUDENTS ||--o{ FEES : "assigned_to"
+    LEADS ||--o{ FEES : "assigned_to (pre-admission)"
+    COURSES ||--o{ FEES : "dictates_amount"
+
+    FEES ||--o{ PAYMENTS : "receives"
+    STUDENTS ||--o{ PAYMENTS : "makes"
 ```
 
 ---
 
 ## 2. Collection Schema Specifications
 
-### A. Staff Collection (`staff`)
-Contains employee records (Admins and Receptionists).
-*   **Unique Index**: `email` (forces unique logins).
+### Core Financial & Student Models (The "Post-Admission" Flow)
 
-| Field Name | Type | Constraints | Description |
-| :--- | :--- | :--- | :--- |
-| `_id` | ObjectId | PK | Unique staff identifier |
-| `name` | String | Required | Full name |
-| `email` | String | Unique, Indexed, Required | Corporate email address |
-| `password` | String | Required | Encrypted password hash |
-| `role` | String | Required | Enum: `admin`, `receptionist` |
-| `status` | String | Required | Enum: `active`, `inactive` |
-| `createdAt` | Date | Default: Now | Account creation date |
-| `updatedAt` | Date | Default: Now | Last profile update date |
+**Student Collection (`students`)**
+Stores the official student record post-enrollment.
+- **Foreign Keys**: `parent_id`, `department_id`, `program_id`.
+- **Key Fields**: `enrollment_number` (Auto-generated), `personal_info`, `contact_info`, `academic_history`.
+- **Note**: A lead converts into a student upon finalizing admission.
 
-### B. Courses Collection (`courses`)
-Stores details of the subjects and programs offered by the institute.
+**Parent Collection (`parents`)**
+Stores guardian contact info and links to children.
+- **Key Fields**: `father`, `mother`, `guardian` objects, `primary_contact`.
+- **Foreign Keys**: `children_ids` (Array of Student ObjectIds).
 
-| Field Name | Type | Constraints | Description |
-| :--- | :--- | :--- | :--- |
-| `_id` | ObjectId | PK | Unique course identifier |
-| `courseName` | String | Unique, Required | Course title (e.g. "JEE Prep") |
-| `code` | String | Unique, Required | Course shorthand code (e.g. "JEE-01") |
-| `description` | String | Optional | Curriculum summary |
-| `durationMonths`| Number | Required | Study timeline length |
-| `isActive` | Boolean | Default: true | Course availability toggle |
-| `createdAt` | Date | Default: Now | Insertion timestamp |
+**Fee Collection (`fees`)**
+Generates the ledger for a student's course.
+- **Foreign Keys**: `lead_id`, `student_id`, `course_id`.
+- **Key Fields**: `net_payable`, `paid_amount`, `due_amount`, `status` (Pending/Partial/Paid).
 
-### C. Lead Status Collection (`lead_status`)
-Defines the lifecycles state a student inquiry goes through.
+**Payment Collection (`payments`)**
+Records individual transaction receipts against a Fee ledger.
+- **Foreign Keys**: `fee_id`, `student_id`, `collected_by` (Users).
+- **Key Fields**: `amount_paid`, `payment_method`, `receipt_number`, `transaction_id`.
 
-| Field Name | Type | Constraints | Description |
-| :--- | :--- | :--- | :--- |
-| `_id` | ObjectId | PK | Unique status identifier |
-| `name` | String | Unique, Required | Display label (e.g. "Contacted") |
-| `key` | String | Unique, Required | System identifier key (e.g. "contacted") |
-| `colorCode` | String | Required | Hex color code for dashboard indicators |
-| `createdAt` | Date | Default: Now | Creation date |
+**Discount Rule Collection (`discountrules`)**
+Stores global discounts that can be applied to fees.
+- **Key Fields**: `name`, `type` (Flat/Percentage), `value`, `is_active`.
 
-### D. Leads Collection (`leads`)
-Core student records captured during Step 1 of the QR code inquiry form.
+**Settings Collection (`settings`)**
+Stores global system configurations (e.g., fee grace periods, institute name, receipt prefixes).
 
-| Field Name | Type | Constraints | Description |
-| :--- | :--- | :--- | :--- |
-| `_id` | ObjectId | PK | Unique lead identifier |
-| `fullName` | String | Required | Student full name |
-| `email` | String | Required | Contact email |
-| `mobileNumber` | String | Required, Indexed | Contact mobile phone |
-| `city` | String | Required | Residency city |
-| `interestedCourseId`| ObjectId | FK ref `courses`, Nullable | Linked course selection |
-| `statusId` | ObjectId | FK ref `lead_status`, Required | References current pipeline status |
-| `assignedToStaffId` | ObjectId | FK ref `staff`, Nullable | Receptionist managing calls |
-| `submittedAt` | Date | Default: Now | Date inquiry submitted |
-| `updatedAt` | Date | Default: Now | Last edit timestamp |
+**Program & Department Collections (`programs`, `departments`)**
+Stores academic categorizations. (Yes, these are actual collections in the codebase!)
 
-### E. Questions Collection (`questions`)
-Stores dynamically configured questions for Step 2 and Step 3 of the form. Allows the institute to update questions without modifying database schemas.
+### Lead & Inquiry Models (The "Pre-Admission" Flow)
 
-| Field Name | Type | Constraints | Description |
-| :--- | :--- | :--- | :--- |
-| `_id` | ObjectId | PK | Unique question identifier |
-| `questionText` | String | Required | The question (e.g., "What is your qualification?") |
-| `stepNumber` | Number | Required | Enum: `2`, `3` |
-| `fieldType` | String | Required | Enum: `text`, `dropdown`, `radio`, `checkbox` |
-| `options` | Array[String]| Required when fieldType is choice-based | List of selection items |
-| `isRequired` | Boolean | Default: false | Form validator requirement check |
-| `isActive` | Boolean | Default: true | If inactive, form excludes it |
-| `createdAt` | Date | Default: Now | Creation date |
+**User Collection (`users`)**
+Admins and Receptionists.
 
-### F. Lead Responses Collection (`lead_responses`)
-Stores the student's dynamic answers to the questions inside Step 2 and Step 3.
+**Courses Collection (`courses`)**
+Offered programs.
 
-| Field Name | Type | Constraints | Description |
-| :--- | :--- | :--- | :--- |
-| `_id` | ObjectId | PK | Unique response identifier |
-| `leadId` | ObjectId | FK ref `leads`, Required | Reference to the student |
-| `questionId` | ObjectId | FK ref `questions`, Required | Reference to the specific question |
-| `responseValue` | String | Required | Student's submitted text/value |
-| `createdAt` | Date | Default: Now | Submission timestamp |
+**Leads Collection (`leads`)**
+Prospects created from the inquiry form. Can convert into `Students`.
+- **Status**: Stored as a simple Enum (`New`, `Contacted`, `Interested`, `Not Interested`, `Enrolled`), NOT as a separate collection.
 
-### G. Feedback Responses Collection (`feedback_responses`)
-Maintains staff-written call feedback, tracking remarks and future appointment logs for the student.
+**Questions (`questions`)**
+Dynamic form engine questions for Step 2/3 of the inquiry. (Lead Responses are stored natively on the `Lead` document's `responses` array rather than a separate collection).
 
-| Field Name | Type | Constraints | Description |
-| :--- | :--- | :--- | :--- |
-| `_id` | ObjectId | PK | Unique feedback entry ID |
-| `leadId` | ObjectId | FK ref `leads`, Required | Lead being evaluated |
-| `staffId` | ObjectId | FK ref `staff`, Required | Admin or Receptionist writing feedback |
-| `feedbackText` | String | Required | Content of review / call summary |
-| `nextFollowUpDate`| Date | Nullable | Scheduled next callback calendar date |
-| `createdAt` | Date | Default: Now | Logging timestamp |
+**FeedbackLog (`feedbacklogs`)**
+Call logs and notes written by Staff regarding a Lead, plus `nextFollowUpDate`.
 
-### H. Audit Log Collection (`audit_log`)
-Monitors application processes for security compliance.
-
-| Field Name | Type | Constraints | Description |
-| :--- | :--- | :--- | :--- |
-| `_id` | ObjectId | PK | Unique audit log ID |
-| `staffId` | ObjectId | FK ref `staff`, Required | User triggering the log |
-| `action` | String | Required | Name of operation (e.g., `LEAD_DELETE`) |
-| `details` | String | Required | Detailed description of action |
-| `timestamp` | Date | Default: Now | Occurrence timestamp |
+**Audit Log (`audit_logs`)**
+System logs tracking actions for compliance.

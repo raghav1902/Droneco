@@ -81,7 +81,9 @@ const StudentSchema = new mongoose.Schema({
   // Media
   media: {
     photo_url: { type: String },
-    signature_url: { type: String }
+    signature_url: { type: String },
+    aadhaar_url: { type: String },
+    marksheet_url: { type: String }
   },
 
   // Emergency Contact
@@ -177,8 +179,8 @@ StudentSchema.pre('save', async function (next) {
     this.contact_info.preferred_language = toTitleCase(this.contact_info.preferred_language);
   }
 
-  // Auto-generate enrollment number if not exists using Counter collection
-  if (this.isNew && !this.enrollment_number) {
+  // Auto-generate enrollment number and student_id if not exists using Counter collection
+  if (this.isNew && (!this.enrollment_number || !this.student_id)) {
     try {
       const Counter = mongoose.model('Counter');
       const counter = await Counter.findByIdAndUpdate(
@@ -188,7 +190,13 @@ StudentSchema.pre('save', async function (next) {
       );
       const year = this.admission_year || new Date().getFullYear();
       const paddedSeq = String(counter.seq).padStart(4, '0'); // e.g., 0001
-      this.enrollment_number = `EN-${year}-${paddedSeq}`;
+      
+      if (!this.enrollment_number) {
+        this.enrollment_number = `ADM-${year}-${paddedSeq}`;
+      }
+      if (!this.student_id) {
+        this.student_id = `DRN${year}${paddedSeq}`;
+      }
     } catch (err) {
       return next(err);
     }

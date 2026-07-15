@@ -25,7 +25,8 @@ const Sidebar = ({ role, activeTab, setActiveTab }) => {
   }, []);
 
   const adminMenu = [
-    { title: 'Dashboard', icon: LayoutDashboard, id: 'dashboard' },
+    { title: 'Analytics Dashboard', icon: LayoutDashboard, id: 'analytics' },
+    { title: 'Daily Operations', icon: LayoutDashboard, id: 'daily-operations' },
     {
       group: 'CRM',
       items: [
@@ -35,15 +36,25 @@ const Sidebar = ({ role, activeTab, setActiveTab }) => {
     {
       group: 'Admissions',
       items: [
+        { title: 'Admission Wizard', icon: UserPlus, id: 'admission-wizard' },
         { title: 'Students', icon: Users, id: 'students' }
       ]
     },
     {
       group: 'Finance',
       items: [
-        { title: 'Fee Dashboard', icon: Wallet, id: 'fee-dashboard' },
-        { title: 'Fee Structure', icon: Receipt, id: 'fee-structure' },
-        { title: 'Discounts', icon: BadgePercent, id: 'discounts' }
+        { title: 'Fee Dashboard', icon: Wallet, id: 'fee_dashboard' },
+        { title: 'Collect Fee', icon: CreditCard, id: 'collect-fee' },
+        { title: 'Due List', icon: Wallet, id: 'due-list' },
+        { title: 'Payment History', icon: Receipt, id: 'payment-history' },
+        { title: 'Fee Structure', icon: Receipt, id: 'fee-structure' } // Note: Fee Structure is courses in AdminDashboard
+      ]
+    },
+    {
+      group: 'Academic',
+      items: [
+        { title: 'Courses', icon: Receipt, id: 'courses' },
+        { title: 'Form Questions', icon: Receipt, id: 'questions' }
       ]
     },
     {
@@ -100,24 +111,16 @@ const Sidebar = ({ role, activeTab, setActiveTab }) => {
       <div className="flex items-center justify-between p-4 border-b border-border h-16">
         {!collapsed && (
           <div className="flex items-center gap-2 font-bold text-lg text-primary truncate">
-            {settings?.institute?.logo ? (
-              <img src={settings.institute.logo} alt="Logo" className="w-8 h-8 rounded object-contain" />
-            ) : (
-              <div className="w-8 h-8 rounded bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                {settings?.institute?.name ? settings.institute.name.charAt(0).toUpperCase() : 'IA'}
-              </div>
-            )}
-            <span className="truncate">{settings?.institute?.name || (role === 'admin' ? 'Institute Admin' : 'Institute Portal')}</span>
+            <div className="w-8 h-8 rounded bg-primary text-primary-foreground flex items-center justify-center font-bold">
+              IA
+            </div>
+            <span className="truncate">{role === 'admin' ? 'Institute Admin' : 'Institute Portal'}</span>
           </div>
         )}
         {collapsed && (
-          settings?.institute?.logo ? (
-            <img src={settings.institute.logo} alt="Logo" className="w-8 h-8 mx-auto rounded object-contain" />
-          ) : (
-            <div className="w-8 h-8 mx-auto rounded bg-primary text-primary-foreground flex items-center justify-center font-bold">
-              {settings?.institute?.name ? settings.institute.name.charAt(0).toUpperCase() : 'IA'}
-            </div>
-          )
+          <div className="w-8 h-8 mx-auto rounded bg-primary text-primary-foreground flex items-center justify-center font-bold">
+            IA
+          </div>
         )}
       </div>
 

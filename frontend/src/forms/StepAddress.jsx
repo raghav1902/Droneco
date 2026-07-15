@@ -5,10 +5,13 @@ import CustomFieldsRenderer from './CustomFieldsRenderer';
 const StepAddress = ({
   formData,
   handleNestedChange,
+  validationErrors,
   prevStep,
   nextStep,
   formConfig
 }) => {
+  const isRequired = formConfig?.address?.required;
+  const getError = (field) => validationErrors?.[`permanent_address.${field}`];
   return (
     <div className="animate-slide-up-fade">
       <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '2.25rem', letterSpacing: '-0.010em' }}>
@@ -24,34 +27,37 @@ const StepAddress = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="form-group">
-            <label className="form-label">House/Flat No. <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
+            <label className="form-label">House/Flat No. {isRequired ? '*' : <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span>}</label>
             <input
               type="text"
               className="form-input"
               value={formData.permanent_address.house_no}
               onChange={(e) => handleNestedChange('permanent_address', 'house_no', e.target.value)}
             />
+            {getError('house_no') && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{getError('house_no')}</span>}
           </div>
           <div className="form-group">
-            <label className="form-label">Street/Locality <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
+            <label className="form-label">Street/Locality {isRequired ? '*' : <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span>}</label>
             <input
               type="text"
               className="form-input"
               value={formData.permanent_address.street}
               onChange={(e) => handleNestedChange('permanent_address', 'street', e.target.value)}
             />
+            {getError('street') && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{getError('street')}</span>}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="form-group">
-            <label className="form-label">City <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
+            <label className="form-label">City {isRequired ? '*' : <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span>}</label>
             <input
               type="text"
               className="form-input"
               value={formData.permanent_address.city}
               onChange={(e) => handleNestedChange('permanent_address', 'city', e.target.value)}
             />
+            {getError('city') && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{getError('city')}</span>}
           </div>
           <div className="form-group">
             <label className="form-label">District <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
@@ -63,34 +69,37 @@ const StepAddress = ({
             />
           </div>
           <div className="form-group">
-            <label className="form-label">State <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
+            <label className="form-label">State {isRequired ? '*' : <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span>}</label>
             <input
               type="text"
               className="form-input"
               value={formData.permanent_address.state}
               onChange={(e) => handleNestedChange('permanent_address', 'state', e.target.value)}
             />
+            {getError('state') && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{getError('state')}</span>}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="form-group">
-            <label className="form-label">Country <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
+            <label className="form-label">Country {isRequired ? '*' : <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span>}</label>
             <input
               type="text"
               className="form-input"
               value={formData.permanent_address.country}
               onChange={(e) => handleNestedChange('permanent_address', 'country', e.target.value)}
             />
+            {getError('country') && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{getError('country')}</span>}
           </div>
           <div className="form-group">
-            <label className="form-label">PIN Code <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span></label>
+            <label className="form-label">PIN Code {isRequired ? '*' : <span style={{ color: "var(--text-muted)", fontSize: "0.85em", fontWeight: "normal" }}>(Optional)</span>}</label>
             <input
               type="text"
               className="form-input"
               value={formData.permanent_address.pin_code}
               onChange={(e) => handleNestedChange('permanent_address', 'pin_code', e.target.value)}
             />
+            {getError('pin_code') && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{getError('pin_code')}</span>}
           </div>
         </div>
       </div>

@@ -19,6 +19,7 @@ const UserSchema = new mongoose.Schema({
     required: true,
     select: false // Exclude from default query results
   },
+  passwordChangedAt: Date,
   role: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Role',
@@ -60,15 +61,31 @@ UserSchema.pre(/^find/, function (next) {
 // Pre-save hook to hash password before saving
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
-    next();
+    return next();
   }
+  
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+  
+  if (!this.isNew) {
+    this.passwordChangedAt = Date.now() - 1000; // Subtract 1s to ensure token created after saving doesn't fail
+  }
+  
+  next();
 });
 
 // Method to match entered password with hashed password
 UserSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Check if password was changed after the token was issued
+UserSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+    return JWTTimestamp < changedTimestamp;
+  }
+  return false;
 };
 
 UserSchema.set('toJSON', {

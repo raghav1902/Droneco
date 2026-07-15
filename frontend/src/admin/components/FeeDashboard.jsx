@@ -15,7 +15,7 @@ const StatCard = ({ title, value, icon: Icon, colorClass }) => (
   </div>
 );
 
-const FeeDashboard = () => {
+const FeeDashboard = ({ setActiveTab }) => {
   const [data, setData] = useState({
     summary: { totalCollected: 0, totalPending: 0, todaysCollection: 0, totalStudents: 0 },
     recentTransactions: [],
@@ -37,6 +37,30 @@ const FeeDashboard = () => {
     fetchDashboard();
   }, []);
 
+  const handleExportCSV = () => {
+    try {
+      const headers = ['TXN ID', 'Student', 'Amount', 'Method', 'Status'];
+      const rows = data.recentTransactions.map(txn => 
+        [txn.id, txn.studentName, txn.amount, txn.method, txn.status].join(',')
+      );
+      
+      const csvContent = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'Fee_Dashboard_Transactions.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('Export successful', 'success');
+    } catch (error) {
+      showToast('Error exporting data', 'error');
+    }
+  };
+
   return (
     <div className="animate-fade-in dashboard-print-container">
       <style>
@@ -56,7 +80,7 @@ const FeeDashboard = () => {
             <option>Last 3 Months</option>
             <option>This Year</option>
           </select>
-          <button className="btn btn-primary" onClick={(e) => { e.preventDefault(); window.print(); }}>Generate Report</button>
+          <button className="btn btn-primary" onClick={(e) => { e.preventDefault(); handleExportCSV(); }}>Generate CSV</button>
         </div>
       </div>
 
@@ -128,7 +152,7 @@ const FeeDashboard = () => {
             </table>
           </div>
           <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-            <button className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }} onClick={(e) => { e.preventDefault(); showToast('Action processed successfully!', 'success'); }}>View All Transactions</button>
+            <button className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }} onClick={() => setActiveTab('payment-history')}>View All Transactions</button>
           </div>
         </div>
       </div>

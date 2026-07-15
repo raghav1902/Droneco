@@ -36,11 +36,6 @@ const paymentSchema = new mongoose.Schema({
     default: 0,
     min: [0, 'Late fee cannot be negative']
   },
-  discount_applied: {
-    type: Number,
-    default: 0,
-    min: [0, 'Discount applied cannot be negative']
-  },
   payment_date: {
     type: Date,
     default: Date.now

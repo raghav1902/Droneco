@@ -10,7 +10,9 @@ const { protect } = require('../middleware/authentication/authMiddleware');
 const { validate } = require('../middleware/validationMiddleware');
 const { authLoginSchema, changePasswordSchema, createUserSchema } = require('../validators/schemas');
 
-router.post('/register', validate(createUserSchema), registerUser); 
+const { authorize } = require('../middleware/authorization/roleMiddleware');
+
+router.post('/register', protect, authorize('Admin'), validate(createUserSchema), registerUser); 
 router.post('/login', validate(authLoginSchema), loginUser);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);

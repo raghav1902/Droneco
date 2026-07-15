@@ -3,11 +3,9 @@ import { Sun, Moon } from 'lucide-react';
 import API from '../api/api';
 import { createLeadSchema, step1Schema, validateForm } from '../utils/validators';
 
+import Step0 from './Step0';
 import Step1 from './Step1';
-import StepPersonal from './StepPersonal';
-import StepParentGuardian from './StepParentGuardian';
-import StepAddress from './StepAddress';
-import StepAcademic from './StepAcademic';
+
 import StepCourse from './StepCourse';
 import Step2 from './Step2';
 import Step3 from './Step3';
@@ -50,7 +48,7 @@ const StudentForm = () => {
 
   // Form State
   const [formData, setFormData] = useState({
-    filler_type: 'student',
+    filler_type: '',
     guardian_name: '',
     guardian_relation: '',
     guardian_phone: '',
@@ -148,10 +146,8 @@ const StudentForm = () => {
     const roleParam = params.get('role');
     if (roleParam === 'guardian') {
       setFormData(prev => ({ ...prev, filler_type: 'guardian' }));
-      setCurrentStep(1);
     } else if (roleParam === 'student') {
       setFormData(prev => ({ ...prev, filler_type: 'student' }));
-      setCurrentStep(1);
     }
   }, []);
 
@@ -208,6 +204,29 @@ const StudentForm = () => {
     }));
   };
 
+  // Validate Step 0
+  const validateStep0 = () => {
+    const errors = {};
+    if (!formData.filler_type) {
+      errors.filler_type = 'Please select who is filling out this form';
+    }
+
+    if (formData.filler_type === 'guardian') {
+      if (!formData.guardian.first_name) errors['guardian.first_name'] = 'Name is required';
+      if (!formData.guardian.email) errors['guardian.email'] = 'Email is required';
+      if (!formData.guardian.mobile_number) errors['guardian.mobile_number'] = 'Mobile number is required';
+      else if (!/^\d{10}$/.test(formData.guardian.mobile_number)) errors['guardian.mobile_number'] = 'Must be exactly 10 digits';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return { isValid: false, errors };
+    }
+    
+    setValidationErrors({});
+    return { isValid: true };
+  };
+
   // Validate Step 1
   const validateStep1 = () => {
     const result = validateForm(step1Schema, formData);
@@ -232,68 +251,34 @@ const StudentForm = () => {
   };
 
   const nextStep = () => {
-    let missingFields = [];
+    let errors = {};
+
+    if (currentStep === 0) {
+      const step0Validation = validateStep0();
+      if (!step0Validation.isValid) return;
+    }
 
     if (currentStep === 1) {
       const step1Validation = validateStep1();
-      if (!step1Validation.isValid) {
-        const errorFields = Object.keys(step1Validation.errors).map(key => {
-          return key.split('.').pop().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        });
-        alert(`Please fill the following required fields to proceed:\n\n- ${errorFields.join('\n- ')}`);
-        return;
-      }
+      if (!step1Validation.isValid) return;
     }
 
     if (currentStep === 2) {
-      // Disabilitiy checks or others if necessary
+      if (!formData.interested_course_id) errors["interested_course_id"] = "Required";
+      if (!formData.admission_year) errors["admission_year"] = "Required";
+      if (!formData.learningMode) errors["learningMode"] = "Required";
     }
 
-    if (currentStep === 3 && formData.filler_type === 'student') {
-      if (!formData.father?.first_name) missingFields.push("Father's First Name");
-      if (!formData.father?.last_name) missingFields.push("Father's Last Name");
-      if (!formData.father?.mobile_number) missingFields.push("Father's Mobile Number");
-      if (!formData.father?.occupation) missingFields.push("Father's Occupation");
-      if (!formData.mother?.first_name) missingFields.push("Mother's First Name");
-      if (!formData.mother?.last_name) missingFields.push("Mother's Last Name");
-      if (!formData.mother?.mobile_number) missingFields.push("Mother's Mobile Number");
-    }
-
-    if (currentStep === 4) {
-      if (formConfig?.address?.visible !== false && formConfig?.address?.required) {
-        if (!formData.permanent_address?.house_no) missingFields.push("Permanent House No.");
-        if (!formData.permanent_address?.street) missingFields.push("Permanent Street");
-        if (!formData.permanent_address?.city) missingFields.push("Permanent City");
-        if (!formData.permanent_address?.state) missingFields.push("Permanent State");
-        if (!formData.permanent_address?.country) missingFields.push("Permanent Country");
-        if (!formData.permanent_address?.pin_code) missingFields.push("Permanent Pin Code");
-      }
-    }
-
-    if (currentStep === 5) {
-      if (formConfig?.qualification?.visible !== false && formConfig?.qualification?.required) {
-        if (!formData.previous_qualification?.school_college_name) missingFields.push("Previous School/College Name");
-      }
-    }
-
-    if (currentStep === 6) {
-      if (!formData.interested_course_id) missingFields.push("Interested Course");
-      if (!formData.admission_year) missingFields.push("Admission Year");
-      if (!formData.department) missingFields.push("Department");
-    }
-
-    if (missingFields.length > 0) {
-      alert(`Please fill the following required fields to proceed:\n\n- ${missingFields.join('\\n- ')}`);
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
       return;
     }
 
-    if (currentStep === 7) {
-      if (!validateStep2Dynamic()) {
-        alert("Please fill all required fields in this step.");
-        return;
-      }
+    if (currentStep === 3) {
+      if (!validateStep2Dynamic()) return;
     }
 
+    setValidationErrors({});
     setCurrentStep(prev => prev + 1);
   };
 
@@ -307,8 +292,23 @@ const StudentForm = () => {
     setError(null);
 
     try {
+      // Create a clean payload with only necessary fields
+      const payload = {
+        ...formData
+      };
+
+      // Remove parent/guardian fields if they are empty so they don't trigger optional Zod validations
+      if (payload.father && !payload.father.first_name) delete payload.father;
+      if (payload.mother && !payload.mother.first_name) delete payload.mother;
+      if (payload.guardian && !payload.guardian.first_name) delete payload.guardian;
+      
+      // Remove other empty objects if needed
+      if (payload.permanent_address && !payload.permanent_address.house_no) delete payload.permanent_address;
+      if (payload.current_address && !payload.current_address.house_no) delete payload.current_address;
+      if (payload.previous_qualification && !payload.previous_qualification.school_college_name) delete payload.previous_qualification;
+
       // Validate everything one last time
-      const finalValidation = validateForm(createLeadSchema, formData);
+      const finalValidation = validateForm(createLeadSchema, payload);
       if (!finalValidation.success) {
         setValidationErrors(finalValidation.errors);
         const errorFields = Object.keys(finalValidation.errors).map(key => {
@@ -319,14 +319,9 @@ const StudentForm = () => {
         return;
       }
 
-      // Create a clean payload with only necessary fields
-      const payload = {
-        ...formData
-      };
-
       const res = await API.post('/leads', payload);
       if (res.data.success) {
-        setCurrentStep(10); // Show success step
+        setCurrentStep(6); // Show success step
       }
     } catch (err) {
       console.error('Submission error:', err);
@@ -396,22 +391,20 @@ const StudentForm = () => {
             Droneco <br />Coaching Institute
           </h1>
           <p style={{ color: 'var(--text-secondary)', marginTop: '1.5rem', maxWidth: '360px', fontSize: '1rem', lineHeight: '1.6' }}>
-            {currentStep === 10
+            {currentStep === 6
               ? 'Your inquiry is complete. Thank you for choosing Droneco.'
-              : currentStep === 0
-                ? 'Welcome to Droneco. Please select who is filling out this form to customize your registration experience.'
-                : 'Please complete this form to register details. One of our advisors will contact you shortly.'}
+              : 'Please complete this form to register details. One of our advisors will contact you shortly.'}
           </p>
         </div>
 
         {/* Subtle Step Tracker */}
-        {currentStep >= 1 && currentStep <= 9 && (
+        {currentStep >= 0 && currentStep <= 5 && (
           <div style={{ marginTop: '3rem' }}>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 550, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Step <strong style={{ color: 'var(--text-main)' }}>{currentStep}</strong> of 9
+              Step <strong style={{ color: 'var(--text-main)' }}>{currentStep + 1}</strong> of 6
             </div>
             <div style={{ display: 'flex', gap: '6px', width: '220px' }}>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(step => (
+              {[0, 1, 2, 3, 4, 5].map(step => (
                 <div key={step} style={{
                   height: '3px',
                   flex: 1,
@@ -433,26 +426,31 @@ const StudentForm = () => {
             </div>
           )}
 
-          {(currentStep === 0 || currentStep === 1) && (
-            <Step1
-              currentStep={currentStep}
-              setCurrentStep={setCurrentStep}
+          {currentStep === 0 && (
+            <Step0
               formData={formData}
               setFormData={setFormData}
               validationErrors={validationErrors}
-              handleBasicChange={handleBasicChange}
               handleNestedChange={handleNestedChange}
-              courses={courses}
-              prevStep={prevStep}
               nextStep={nextStep}
-              formConfig={formConfig}
+            />
+          )}
+
+          {currentStep === 1 && (
+            <Step1
+              formData={formData}
+              validationErrors={validationErrors}
+              handleBasicChange={handleBasicChange}
+              nextStep={nextStep}
             />
           )}
 
           {currentStep === 2 && (
-            <StepPersonal
+            <StepCourse
               formData={formData}
               handleBasicChange={handleBasicChange}
+              validationErrors={validationErrors}
+              courses={courses}
               prevStep={prevStep}
               nextStep={nextStep}
               formConfig={formConfig}
@@ -460,48 +458,6 @@ const StudentForm = () => {
           )}
 
           {currentStep === 3 && (
-            <StepParentGuardian
-              formData={formData}
-              handleNestedChange={handleNestedChange}
-              validationErrors={validationErrors}
-              prevStep={prevStep}
-              nextStep={nextStep}
-              formConfig={formConfig}
-            />
-          )}
-
-          {currentStep === 4 && (
-            <StepAddress
-              formData={formData}
-              handleNestedChange={handleNestedChange}
-              prevStep={prevStep}
-              nextStep={nextStep}
-              formConfig={formConfig}
-            />
-          )}
-
-          {currentStep === 5 && (
-            <StepAcademic
-              formData={formData}
-              handleNestedChange={handleNestedChange}
-              prevStep={prevStep}
-              nextStep={nextStep}
-              formConfig={formConfig}
-            />
-          )}
-
-          {currentStep === 6 && (
-            <StepCourse
-              formData={formData}
-              handleBasicChange={handleBasicChange}
-              courses={courses}
-              prevStep={prevStep}
-              nextStep={nextStep}
-              formConfig={formConfig}
-            />
-          )}
-
-          {currentStep === 7 && (
             <Step2
               formData={formData}
               validationErrors={validationErrors}
@@ -513,7 +469,7 @@ const StudentForm = () => {
             />
           )}
 
-          {currentStep === 8 && (
+          {currentStep === 4 && (
             <Step3
               formData={formData}
               handleFeedbackChange={handleFeedbackChange}
@@ -522,7 +478,7 @@ const StudentForm = () => {
             />
           )}
 
-          {currentStep === 9 && (
+          {currentStep === 5 && (
             <Review
               formData={formData}
               courses={courses}
@@ -533,7 +489,7 @@ const StudentForm = () => {
             />
           )}
 
-          {currentStep === 10 && (
+          {currentStep === 6 && (
             <Success
               formData={formData}
               setCurrentStep={setCurrentStep}

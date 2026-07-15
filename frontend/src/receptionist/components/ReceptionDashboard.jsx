@@ -65,7 +65,9 @@ const ReceptionDashboard = () => {
           const fees = feesRes.data.data;
           let pendingTotal = 0;
           fees.forEach(f => {
-            pendingTotal += (f.due_amount || 0);
+            if (f.student_id || (f.lead_id && f.lead_id.status === 'Enrolled')) {
+              pendingTotal += (f.due_amount || 0);
+            }
           });
           setPendingFees(pendingTotal);
         }
